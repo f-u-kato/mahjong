@@ -393,14 +393,23 @@ def draw_movie(field_points,size,m,cap,win_player,cM,agari,dst,min_size=(540,960
     video.release()
     return
 def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,min_size=(540,960,3),save_time=None,round_wind=0,honba=0,save_movie=None,effect=None):
+    #表示倍率
     reduction=size[0]/min_size[0]
-    #かぶらないように調節
+    
+    #目印用表示
     img=draw.draw_rect(field_points,size,reduction=reduction)
     img=draw.draw_ura_rect(field_points,size,img,reduction=reduction)
     img=draw.draw_kaze(field_points,ton_player,img=img,reduction=reduction)
     # img=draw.draw_honba(field_points,ton_player,round_wind,honba,img=img,reduction=reduction)
     
+    #投影
     sM=show_img(img,m,field_points,dst=dst,reduction=reduction)
+
+    #サイコロ用変数
+    dice_count=0
+    dice_rand=random.randint(20,30)
+    dice_number=[0,0]
+
     while(1):
         ret, im = cap.read()
         im=transform_camera(im,M=cM)
@@ -409,11 +418,20 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,min_size=(540,960,3),
         if effect is not None:
             effect.write(cv2.resize(img,(1920,1080)))
         cv2.imshow('Camera',cv2.resize(im,(1920,1080)))
+
+        #サイコロの表示
+        if dice_count<2*dice_rand and dice_count%2==0:
+            dice_img,dice_number=draw.draw_dice(field_points,size,img,reduction,dice_number)
+            show_img(dice_img,m,field_points,dst=dst,reduction=reduction,M=sM)
+        dice_count+=1
+
         c=cv2.waitKey(1)
         if c  == ord('q'):
             break
         elif c == ord('p'):
+            #終了
             return 0,save_time,False
+        
     isRead=True
     while(isRead):
         reduction=size[0]/min_size[0]
