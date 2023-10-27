@@ -13,7 +13,7 @@ import draw_img as draw
 import mahjong_eval as eval
 import get_area as area
 import get_img as get
-import data.mahjong.calculation as mahjong_calculation
+import calculation as mahjong_calculation
 import play_music as music
 
 
