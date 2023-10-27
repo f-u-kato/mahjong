@@ -10,12 +10,12 @@ import os
 import glob
 import re
 
-import draw_img as draw
-import mahjong_eval as eval
-import get_area as area
-import get_img as get
-import calculation as mahjong_calculation
-import play_music as music
+import src.out_func.draw_img as draw
+import src.eval.mahjong_eval as eval
+import src.get_func.get_area as area
+import src.get_func.get_img as get
+import src.eval.calculation as mahjong_calculation
+import src.out_func.play_music as music
 import output_video as ov
 
 import concurrent.futures 

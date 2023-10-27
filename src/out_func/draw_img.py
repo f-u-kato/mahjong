@@ -2,7 +2,7 @@ import random
 import cv2
 import numpy as np
 
-import get_img as get
+import src.get_func.get_img as get
 
 MAHJONG_CLASSES = ("1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m",
                    "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p",

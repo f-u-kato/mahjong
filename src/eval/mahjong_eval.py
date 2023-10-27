@@ -15,9 +15,9 @@ import torch
 import torchvision.models as models
 from torchvision import transforms
 import torch.backends.cudnn as cudnn
-import draw_img as draw
-import get_img as get
-import eval as eval
+import src.out_func.draw_img as draw
+import src.get_func.get_img as get
+import src.eval.eval as eval
 from PIL import Image
 
 def cv2pil(image):

@@ -9,13 +9,14 @@ import pandas as pd
 import os
 import glob
 
-import draw_img as draw
-import mahjong_eval as eval
-import get_area as area
-import get_img as get
-import calculation as mahjong_calculation
-import play_music as music
-import camera
+import src.out_func.draw_img as draw
+import src.eval.mahjong_eval as eval
+import src.get_func.get_area as area
+import src.get_func.get_img as get
+import src.eval.calculation as mahjong_calculation
+import src.out_func.play_music as music
+import src.out_func.transform_video as trans
+import src.out_func.camera as camera
 
 import concurrent.futures 
 
@@ -70,46 +71,6 @@ def get_wind(player_num,ton_num):
         num+=4
     return num
 
-#カメラの補正
-def transform_camera(path,field_points=None,src=None,M=None):
-    img=path.copy()
-    height,width,_=img.shape
-    if M is None:
-        dst=[field_points[0],[field_points[1][0],field_points[0][1]]
-             ,[field_points[0][0],field_points[1][1]],field_points[1]]
-        dst=np.float32(dst)
-        src=np.float32(src)
-        
-        # 変換行列
-        M = cv2.getPerspectiveTransform(src, dst)
-    
-        # 射影変換・透視変換する
-        output = cv2.warpPerspective(img, M,(width, height))
-        return output,M
-    else:
-        output = cv2.warpPerspective(img, M,(width, height))
-        return output
-
-#投影の補正
-def transform_img(path,dst=None,field_points=None,M=None):
-    img=path.copy()
-    
-    height,width,_=img.shape
-    if M is None:
-        src=[field_points[0],[field_points[1][0],field_points[0][1]]
-             ,[field_points[0][0],field_points[1][1]],field_points[1]]
-        src=np.float32(src)
-        # 変換行列
-        M = cv2.getPerspectiveTransform(src, dst)
-    
-        # 射影変換・透視変換する
-        output = cv2.warpPerspective(img, M,(width, height))
-        return output,M
-    else:
-        output = cv2.warpPerspective(img, M,(int(width), int(height)))
-        return output
-
-
 
 def check_tile(field_points,im,size=(2160,3840,3),threshold=0.8):
     hai_size=max(field_points[1][0]-field_points[0][0],field_points[1][1]-field_points[0][1])//15
@@ -146,7 +107,7 @@ def show_img(img,size_data=None,field_points=None,dst=None,M=None,reduction=1):
         new_dst=dst.copy()
         new_dst/=reduction
         draw_points=([int(field_points[0][0]//reduction),int(field_points[0][1]//reduction)],[int(field_points[1][0]//reduction),int(field_points[1][1]//reduction)])
-        new_im,M=transform_img(img,dst=new_dst,field_points=draw_points)
+        new_im,M=trans.transform_img(img,dst=new_dst,field_points=draw_points)
         cv2.imshow("Projector Output", new_im)
         cv2.moveWindow('Projector Output',size_data.x,size_data.y)
         # プロジェクターに接続する
@@ -154,7 +115,7 @@ def show_img(img,size_data=None,field_points=None,dst=None,M=None,reduction=1):
         cv2.resizeWindow("Projector Output", size_data.width, size_data.height)
         return M
     else:
-        cv2.imshow("Projector Output", transform_img(img,M=M))
+        cv2.imshow("Projector Output", trans.transform_img(img,M=M))
         cv2.moveWindow('Projector Output',size_data.x,size_data.y)
         # プロジェクターに接続する
         cv2.setWindowProperty("Projector Output", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
@@ -192,7 +153,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba,d
     # count=camera.get_max_int("./riichi/"+str(i))
     while(cap.isOpened()):
         ret, im = cap.read()
-        im = transform_camera(im,M=cM)
+        im = trans.transform_camera(im,M=cM)
         if save_movie is not None:
             save_movie.write(cv2.resize(im,(1920,1080)))
         
@@ -266,7 +227,7 @@ def wait_no_wintile(field_points,win_player,size,dst,cap,cM,m,im=None,reduction=
     show_img(img,m,field_points,dst=dst,reduction=reduction)
     while(cap.isOpened()):
         ret, im = cap.read()
-        im=transform_camera(im,M=cM)
+        im=trans.transform_camera(im,M=cM)
         if save_movie is not None:
             save_movie.write(cv2.resize(im,(1920,1080)))
         if effect is not None:
@@ -301,7 +262,7 @@ def read_wintile(field_points,win_player,size,cap,cM,ton_player,m,dst,is_eval_dr
         ret, im = cap.read()
         show_img(img,m,field_points,M=sM,reduction=reduction)
         cv2.waitKey(1)
-        im=transform_camera(im,M=cM)
+        im=trans.transform_camera(im,M=cM)
         new_im=im.copy()
         new_im=draw.draw_player_rect2(field_points,win_player,size,new_im)
         cv2.imshow("Camera", cv2.resize(new_im,(1920,1080)))
@@ -345,7 +306,7 @@ def draw_movie(field_points,size,m,cap,win_player,cM,agari,dst,min_size=(540,960
         count=0
         while(cap.isOpened()):
             ret, im = cap.read()
-            im=transform_camera(im,M=cM)
+            im=trans.transform_camera(im,M=cM)
             if save_movie is not None:
                 save_movie.write(cv2.resize(im,(1920,1080)))
             
@@ -372,7 +333,7 @@ def draw_movie(field_points,size,m,cap,win_player,cM,agari,dst,min_size=(540,960
             count=0
             while(cap.isOpened()):
                 ret, im = cap.read()
-                im=transform_camera(im,M=cM)
+                im=trans.transform_camera(im,M=cM)
                 if save_movie is not None:
                     save_movie.write(cv2.resize(im,(1920,1080)))
                 cv2.imshow("Camera", cv2.resize(im,(1920,1080)))
@@ -412,7 +373,7 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,min_size=(540,960,3),
 
     while(1):
         ret, im = cap.read()
-        im=transform_camera(im,M=cM)
+        im=trans.transform_camera(im,M=cM)
         if save_movie is not None:
             save_movie.write(cv2.resize(im,(1920,1080)))
         if effect is not None:
@@ -474,7 +435,7 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,min_size=(540,960,3),
             for i in range(500):
                 cv2.waitKey(1)
             ret, im = cap.read()
-            im=transform_camera(im,M=cM)
+            im=trans.transform_camera(im,M=cM)
             # 点数計算
             hai_img=get.get_hand(field_points,win_player,im,size)
             hand_classes,hand_scores,hand_boxes=eval.hand_eval(hai_img,0.3)
@@ -542,7 +503,7 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,min_size=(540,960,3),
             
             while(1):
                 ret, im = cap.read()
-                im=transform_camera(im,M=cM)
+                im=trans.transform_camera(im,M=cM)
                 if save_movie is not None:
                     save_movie.write(cv2.resize(im,(1920,1080)))
                 if effect is not None:
@@ -594,7 +555,7 @@ def main():
         if ret:
             def_points=area.get_green(im)
             color = (0, 0, 255)
-            # im,_=transform_camera(im,dst=field_points)
+            # im,_=trans.transform_camera(im,dst=field_points)
             if len(def_points) > 0:
                 new_im=im.copy()
                 
@@ -614,7 +575,7 @@ def main():
     def_points=area.mask_sort(def_points)
     print("field",field_points)
     print("def",def_points)
-    save_im,cM=transform_camera(im,field_points,src=def_points)
+    save_im,cM=trans.transform_camera(im,field_points,src=def_points)
     save_im[:field_points[0][1], :] = 0  # 上部
     save_im[field_points[1][1]:, :] = 0  # 下部
     save_im[:, :field_points[0][0]] = 0  # 左側
@@ -644,7 +605,7 @@ def main():
     isBreak=False
     while(cap.isOpened()):
         ret, im = cap.read()
-        im=transform_camera(im,M=cM)
+        im=trans.transform_camera(im,M=cM)
         if save_movie is not None:
             save_movie.write(cv2.resize(im,(1920,1080)))
         im[:field_points[0][1], :] = 0  # 上部
