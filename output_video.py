@@ -353,7 +353,7 @@ def draw_movie(field_points,size,m,cap,win_player,cM,agari,dst,min_size=(540,960
 
     video.release()
     return
-def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,min_size=(540,960,3),save_time=None,round_wind=0,honba=0,save_movie=None,effect=None):
+def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_size=(540,960,3),save_time=None,round_wind=0,honba=0,save_movie=None,effect=None):
     #表示倍率
     reduction=size[0]/min_size[0]
     
@@ -631,9 +631,12 @@ def main():
     size=im.shape
     round_wind=0
     isContinue=True
+
+    player_point=[25000,25000,25000,25000]
+
     while(isContinue):
         while(ton_player<=4 and isContinue):
-            win_result,time_df,isContinue=mahjong_main(cap,m,dst,ton_player,field_points,cM,size,save_time=time_df,round_wind=round_wind,honba=honba,save_movie=save_movie,effect=effect)
+            win_result,time_df,isContinue=mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_point,save_time=time_df,round_wind=round_wind,honba=honba,save_movie=save_movie,effect=effect)
             if win_result>0:
                 ton_player+=1
             honba+=1
