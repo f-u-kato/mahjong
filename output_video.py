@@ -632,11 +632,11 @@ def main():
     round_wind=0
     isContinue=True
 
-    player_point=[25000,25000,25000,25000]
+    player_points=[25000,25000,25000,25000]
 
     while(isContinue):
         while(ton_player<=4 and isContinue):
-            win_result,time_df,isContinue=mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_point,save_time=time_df,round_wind=round_wind,honba=honba,save_movie=save_movie,effect=effect)
+            win_result,time_df,isContinue=mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,save_time=time_df,round_wind=round_wind,honba=honba,save_movie=save_movie,effect=effect)
             if win_result>0:
                 ton_player+=1
             honba+=1

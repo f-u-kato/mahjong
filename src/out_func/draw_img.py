@@ -259,15 +259,13 @@ def draw_rect2(field_points,size=(2160,3840,3),img=None,color = (0, 255, 0)):
         cv2.rectangle(img, pt1, pt2, color,3)
     return img
 
-def draw_player_rect(field_points,player,size=(2160,3840,3),img=None,first=False,color = (0, 255, 0),return_points=False,reduction=1):
+# 鳴き牌の位置
+def draw_player_naki(field_points,player,size=(2160,3840,3),img=None,first=False,color = (0, 255, 0),return_points=False,reduction=1):
     draw_points=([int(field_points[0][0]//reduction),int(field_points[0][1]//reduction)],[int(field_points[1][0]//reduction),int(field_points[1][1]//reduction)])
     draw_size=[int(size[0]//reduction),int(size[1]//reduction),3]
     if img is None:
         img=np.zeros(draw_size,np.uint8)
-        
-    first_img=img.copy()
     hai_size=max(draw_points[1][0]-draw_points[0][0],draw_points[1][1]-draw_points[0][1])//15
-    points=[]
     #鳴き牌
     if player == 1:
         pt1 = [draw_points[0][0]+hai_size,draw_points[0][1]]
@@ -281,8 +279,17 @@ def draw_player_rect(field_points,player,size=(2160,3840,3),img=None,first=False
     elif player == 2:
         pt1 = [draw_points[0][0],draw_points[1][1]-hai_size]
         pt2 = [pt1[0]+hai_size*3,pt1[1]-hai_size*3]
-    cv2.rectangle(img, pt1, pt2, color,int(3//reduction))
-    points.append([pt1,pt2])
+    return [pt1,pt2]
+
+# 手牌の位置
+def draw_player_hand(field_points,player,size=(2160,3840,3),img=None,first=False,color = (0, 255, 0),return_points=False,reduction=1):
+    draw_points=([int(field_points[0][0]//reduction),int(field_points[0][1]//reduction)],[int(field_points[1][0]//reduction),int(field_points[1][1]//reduction)])
+    draw_size=[int(size[0]//reduction),int(size[1]//reduction),3]
+    if img is None:
+        img=np.zeros(draw_size,np.uint8)
+    hai_size=max(draw_points[1][0]-draw_points[0][0],draw_points[1][1]-draw_points[0][1])//15
+    #鳴き牌
+    [pt1,pt2]=draw_player_naki(field_points,player,size,img,first,color,return_points,reduction)
     #手牌
     if player == 1:
         pt1 = [pt2[0]+hai_size//3,pt1[1]]
@@ -296,8 +303,16 @@ def draw_player_rect(field_points,player,size=(2160,3840,3),img=None,first=False
     elif player == 2:
         pt1 = [pt1[0],pt2[1]-hai_size//3]
         pt2 = [pt1[0]+hai_size*4//3,pt1[1]-hai_size*8]
-    cv2.rectangle(img, pt1, pt2, color,int(3//reduction))
-    points.append([pt1,pt2])
+    return [pt1,pt2]
+
+def draw_player_dora(field_points,player,size=(2160,3840,3),img=None,first=False,color = (0, 255, 0),return_points=False,reduction=1):
+    draw_points=([int(field_points[0][0]//reduction),int(field_points[0][1]//reduction)],[int(field_points[1][0]//reduction),int(field_points[1][1]//reduction)])
+    draw_size=[int(size[0]//reduction),int(size[1]//reduction),3]
+    if img is None:
+        img=np.zeros(draw_size,np.uint8)
+    hai_size=max(draw_points[1][0]-draw_points[0][0],draw_points[1][1]-draw_points[0][1])//15
+   #手牌
+    [pt1,pt2]=draw_player_hand(field_points,player,size,img,first,color,return_points,reduction)
     #ドラ
     if player == 1:
         pt1 = [pt2[0],pt2[1]+hai_size//10]
@@ -311,10 +326,16 @@ def draw_player_rect(field_points,player,size=(2160,3840,3),img=None,first=False
     elif player == 2:
         pt1 = [pt2[0]+hai_size//10,pt2[1]]
         pt2 = [pt1[0]+hai_size*4//3,pt1[1]+hai_size*5]
-    cv2.rectangle(img, pt1, pt2, color,int(3//reduction))
-    points.append([pt1,pt2])
-    if first:
-        img=first_img
+    return [pt1,pt2]
+
+def draw_player_wintile(field_points,player,size=(2160,3840,3),img=None,first=False,color = (0, 255, 0),return_points=False,reduction=1):
+    draw_points=([int(field_points[0][0]//reduction),int(field_points[0][1]//reduction)],[int(field_points[1][0]//reduction),int(field_points[1][1]//reduction)])
+    draw_size=[int(size[0]//reduction),int(size[1]//reduction),3]
+    if img is None:
+        img=np.zeros(draw_size,np.uint8)
+    hai_size=max(draw_points[1][0]-draw_points[0][0],draw_points[1][1]-draw_points[0][1])//15
+   #ドラ
+    [pt1,pt2]=draw_player_dora(field_points,player,size,img,first,color,return_points,reduction)
     #あがりはい
     if player == 1:
         pt1 = [pt2[0]-hai_size,pt1[1]]
@@ -328,8 +349,36 @@ def draw_player_rect(field_points,player,size=(2160,3840,3),img=None,first=False
     elif player == 2:
         pt1 = [pt1[0],pt2[1]+hai_size]
         pt2 = [pt1[0]+hai_size*4//3,pt1[1]+hai_size*4//3]
+    return [pt1,pt2]
+
+def draw_player_rect(field_points,player,size=(2160,3840,3),img=None,first=False,color = (0, 255, 0),return_points=False,reduction=1):
+    draw_points=([int(field_points[0][0]//reduction),int(field_points[0][1]//reduction)],[int(field_points[1][0]//reduction),int(field_points[1][1]//reduction)])
+    draw_size=[int(size[0]//reduction),int(size[1]//reduction),3]
+    if img is None:
+        img=np.zeros(draw_size,np.uint8)
+        
+    first_img=img.copy()
+    hai_size=max(draw_points[1][0]-draw_points[0][0],draw_points[1][1]-draw_points[0][1])//15
+    points=[]
+    #鳴き牌
+    [pt1,pt2]=draw_player_naki(field_points,player,size,img,first,color,return_points,reduction)
     cv2.rectangle(img, pt1, pt2, color,int(3//reduction))
     points.append([pt1,pt2])
+    #手牌
+    [pt1,pt2]=draw_player_hand(field_points,player,size,img,first,color,return_points,reduction)
+    cv2.rectangle(img, pt1, pt2, color,int(3//reduction))
+    points.append([pt1,pt2])
+    #ドラ
+    [pt1,pt2]=draw_player_dora(field_points,player,size,img,first,color,return_points,reduction)
+    cv2.rectangle(img, pt1, pt2, color,int(3//reduction))
+    points.append([pt1,pt2])
+    if first:
+        img=first_img
+    #あがりはい
+    for i in range(4):
+        [pt1,pt2]=draw_player_wintile(field_points,i+1,size,img,first,color,return_points,reduction)
+        cv2.rectangle(img, pt1, pt2, color,int(3//reduction))
+        points.append([pt1,pt2])
     if return_points:
         return points
     return img
