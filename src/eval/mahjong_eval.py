@@ -206,6 +206,50 @@ def multi_bbox_intersection_area(bboxes1, bbox2,classes1,class2):
 
     return interarea
 
+def win_results(preds,w,h,score_threshold=0.5,top_k=1):
+    with timer.env('Postprocess'):
+        save = cfg.rescore_bbox
+        cfg.rescore_bbox = True
+        t = postprocess(preds, w, h, score_threshold = score_threshold)
+        cfg.rescore_bbox = save
+
+    with timer.env('Copy'):
+        idx = t[1].argsort(0, descending=True)[:top_k]
+        
+        if cfg.eval_mask_branch:
+            # Masks are drawn on the GPU, so don't copy
+            masks = t[3][idx]
+        classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
+    return [classes,scores,boxes]
+
+def multi_win_eval(imgs,score_threshold=0.5):
+    images=[draw.padding_img_size(img.copy()) for img in imgs]
+    h, w, _ = images[0].shape
+    
+    model_path = SavePath.from_str(TRAINED_MODEL)
+    config = model_path.model_name + '_config'
+    set_cfg(config)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    results=[]
+    with torch.no_grad():
+        net = Yolact()
+        net.load_weights(TRAINED_MODEL)
+        net.eval()
+        net = net.to(device)
+        net.detect.use_fast_nms = True
+        net.detect.use_cross_class_nms = False
+        cfg.mask_proto_debug = False
+        frames = [torch.from_numpy(img).to(device).float() for img in images]
+        batch = torch.stack(frames)
+        batch = FastBaseTransform()(batch)
+        preds = net(batch)
+        top_k=1
+        for pred in preds:
+            results.append(win_results(pred,w,h,score_threshold,top_k))
+
+    return results
+
 def win_eval(img,score_threshold=0.5):
     img=draw.padding_img_size(img.copy())
     h, w, _ = img.shape
@@ -227,24 +271,27 @@ def win_eval(img,score_threshold=0.5):
         frame = torch.from_numpy(img).to(device).float()
         batch = FastBaseTransform()(frame.unsqueeze(0))
         preds = net(batch)
-        
         top_k=1
-        
-        with timer.env('Postprocess'):
-            save = cfg.rescore_bbox
-            cfg.rescore_bbox = True
-            t = postprocess(preds, w, h, score_threshold = score_threshold)
-            cfg.rescore_bbox = save
-
-        with timer.env('Copy'):
-            idx = t[1].argsort(0, descending=True)[:top_k]
-            
-            if cfg.eval_mask_branch:
-                # Masks are drawn on the GPU, so don't copy
-                masks = t[3][idx]
-            classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
+        [classes,scores,boxes]=win_results(preds,w,h,score_threshold,top_k)
     
     return classes,scores,boxes
+
+def dora_results(preds,w,h,score_threshold=0.5,top_k=8):
+    with timer.env('Postprocess'):
+        save = cfg.rescore_bbox
+        cfg.rescore_bbox = True
+        t = postprocess(preds, w, h, score_threshold = score_threshold)
+        cfg.rescore_bbox = save
+
+    with timer.env('Copy'):
+        idx = t[1].argsort(0, descending=True)[:top_k]
+        
+        if cfg.eval_mask_branch:
+            # Masks are drawn on the GPU, so don't copy
+            masks = t[3][idx]
+        classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
+
+    return [classes,scores,boxes]
 
 def dora_eval(img,score_threshold=0.5):
     img=draw.padding_img(img.copy())
@@ -268,22 +315,25 @@ def dora_eval(img,score_threshold=0.5):
         batch = FastBaseTransform()(frame.unsqueeze(0))
         preds = net(batch)
         top_k=8
-        
-        with timer.env('Postprocess'):
-            save = cfg.rescore_bbox
-            cfg.rescore_bbox = True
-            t = postprocess(preds, w, h, score_threshold = score_threshold)
-            cfg.rescore_bbox = save
-
-        with timer.env('Copy'):
-            idx = t[1].argsort(0, descending=True)[:top_k]
-            
-            if cfg.eval_mask_branch:
-                # Masks are drawn on the GPU, so don't copy
-                masks = t[3][idx]
-            classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
-
+        [classes,scores,boxes]=dora_results(preds,w,h,score_threshold,top_k)
     return classes,scores,boxes
+
+def hand_results(preds,w,h,score_threshold=0.5,top_k=13):
+    with timer.env('Postprocess'):
+        save = cfg.rescore_bbox
+        cfg.rescore_bbox = True
+        t = postprocess(preds, w, h, score_threshold = score_threshold)
+        cfg.rescore_bbox = save
+    
+    with timer.env('Copy'):
+        idx = t[1].argsort(0, descending=True)
+        
+        if cfg.eval_mask_branch:
+            # Masks are drawn on the GPU, so don't copy
+            masks = t[3][idx]
+        classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
+        classes, scores, boxes = delete_large_box(classes,scores,boxes,top_k)
+    return [classes,scores,boxes]
 
 def hand_eval(img,score_threshold=0.5):
     img=draw.padding_img(img.copy())
@@ -307,24 +357,27 @@ def hand_eval(img,score_threshold=0.5):
         batch = FastBaseTransform()(frame.unsqueeze(0))
         preds = net(batch)
         top_k=13
-        
-        with timer.env('Postprocess'):
+        [classes,scores,boxes]=hand_results(preds,w,h,score_threshold,top_k)
+
+    return classes,scores,boxes
+
+
+def naki_results(preds,w,h,score_threshold=0.5,top_k=16):
+    with timer.env('Postprocess'):
             save = cfg.rescore_bbox
             cfg.rescore_bbox = True
             t = postprocess(preds, w, h, score_threshold = score_threshold)
             cfg.rescore_bbox = save
-        # t=tuple(x.cpu() for x in t)
-        # t=nms_fast(t[2],t[1],t[0],t[3],0.3)
-        with timer.env('Copy'):
-            idx = t[1].argsort(0, descending=True)
-            
-            if cfg.eval_mask_branch:
-                # Masks are drawn on the GPU, so don't copy
-                masks = t[3][idx]
-            classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
-            classes, scores, boxes = delete_large_box(classes,scores,boxes,top_k)
 
-    return classes,scores,boxes
+    with timer.env('Copy'):
+        idx = t[1].argsort(0, descending=True)[:top_k]
+        
+        if cfg.eval_mask_branch:
+            # Masks are drawn on the GPU, so don't copy
+            masks = t[3][idx]
+        classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
+
+    return [classes,scores,boxes]
 
 def naki_eval(img,score_threshold=0.5):
     img=draw.padding_img(img)
@@ -347,23 +400,8 @@ def naki_eval(img,score_threshold=0.5):
         frame = torch.from_numpy(img).to(device).float()
         batch = FastBaseTransform()(frame.unsqueeze(0))
         preds = net(batch)
-        
         top_k=16
-        
-        with timer.env('Postprocess'):
-            save = cfg.rescore_bbox
-            cfg.rescore_bbox = True
-            t = postprocess(preds, w, h, score_threshold = score_threshold)
-            cfg.rescore_bbox = save
-
-        with timer.env('Copy'):
-            idx = t[1].argsort(0, descending=True)[:top_k]
-            
-            if cfg.eval_mask_branch:
-                # Masks are drawn on the GPU, so don't copy
-                masks = t[3][idx]
-            classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
-
+        [classes,scores,boxes]=naki_results(preds,w,h,score_threshold,top_k)
     return classes,scores,boxes
 
 import cv2
