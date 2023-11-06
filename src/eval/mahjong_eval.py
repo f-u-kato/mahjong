@@ -66,7 +66,7 @@ NAKI_TRAINED_MODEL=r"weights\yolact_mahjong_naki_32_10000.pth"
 # TRAINED_MODEL=r"weights\dora_plus\yolact_mahjong_create_47_30000.pth"
 # TRAINED_MODEL=r"weights\dora_plus\yolact_mahjong_create_63_40000.pth"
 TRAINED_MODEL=r"weights\hand_naki_dora_win\yolact_mahjong_create_47_30000.pth"
-TRAINED_MODEL=r"weights\hand_naki_dora_win\yolact_mahjong_create_31_20000.pth"
+ALL_TRAINED_MODEL=r"weights\hand_naki_dora_win\yolact_mahjong_create_31_20000.pth"
 # TRAINED_MODEL=r"weights\hand_naki_dora_win\yolact_mahjong_create_15_10000.pth"
 
 
@@ -404,6 +404,36 @@ def naki_eval(img,score_threshold=0.5):
         [classes,scores,boxes]=naki_results(preds,w,h,score_threshold,top_k)
     return classes,scores,boxes
 
+def without_win_eval(imgs,score_threshold=0.5):
+    images=[draw.padding_img_size(img.copy()) for img in imgs]
+    hand_h,hand_w,_=images[0].shape
+    dora_h,dora_w,_=images[1].shape
+    naki_h,naki_w,_=images[2].shape
+    
+    model_path = SavePath.from_str(ALL_TRAINED_MODEL)
+    config = model_path.model_name + '_config'
+    set_cfg(config)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+    with torch.no_grad():
+        net = Yolact()
+        net.load_weights(TRAINED_MODEL)
+        net.eval()
+        net = net.to(device)
+        net.detect.use_fast_nms = True
+        net.detect.use_cross_class_nms = False
+        cfg.mask_proto_debug = False
+        frames = [torch.from_numpy(img).to(device).float() for img in images]
+        batch = torch.stack(frames)
+        batch = FastBaseTransform()(batch)
+        preds = net(batch)
+        
+        [hand_classes,hand_scores,hand_boxes]=hand_results(preds[0],hand_w,hand_h,score_threshold,13)
+        [dora_classes,dora_scores,dora_boxes]=dora_results(preds[1],dora_w,dora_h,score_threshold,8)
+        [naki_classes,naki_scores,naki_boxes]=naki_results(preds[2],naki_w,naki_h,score_threshold,16)
+    return [hand_classes,hand_scores,hand_boxes],[dora_classes,dora_scores,dora_boxes],[naki_classes,naki_scores,naki_boxes]
+    
 import cv2
 MAHJONG_CLASSES = ("1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m",
                    "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p",

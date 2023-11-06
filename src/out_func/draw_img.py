@@ -213,17 +213,12 @@ def draw_rect_movie(field_points,cap,size=(2160,3840,3),img=None,color = (0, 255
     if not ret:
         cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
         _,frame=cap.read()
-
- 
  
     frame=cv2.resize(frame,[hai_size*2,hai_size*2])   
     mask = np.all(frame[:,:,:] == [0, 0, 0], axis=-1)
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
     frame[mask,3] = 0
 
-    
-    
-    
     pt1 = [draw_points[0][0]+hai_point[0],draw_points[0][1]+hai_point[1]]
     pt2 = [x + hai_size for x in pt1]
     pt1,pt2=min_max_xy(pt1,pt2)
@@ -251,9 +246,6 @@ def draw_rect_movie(field_points,cap,size=(2160,3840,3),img=None,color = (0, 255
 def draw_rect2(field_points,size=(2160,3840,3),img=None,color = (0, 255, 0)):
     if img is None:
         img=np.zeros(size,np.uint8)
-    hai_size=max(field_points[1][0]-field_points[0][0],field_points[1][1]-field_points[0][1])//15
-    hai_point=[hai_size*2+50,hai_size]
-    field_size=[field_points[1][0]-field_points[0][0],field_points[1][1]-field_points[0][1]]
     for i in range(4):
         pt1,pt2=get.get_trigger(field_points,i+1,size=size,get_points=True)
         cv2.rectangle(img, pt1, pt2, color,3)
