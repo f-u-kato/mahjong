@@ -80,6 +80,7 @@ transform=transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
         ])
+
 def trigger_eval(img):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     img=cv2pil(img)
@@ -87,9 +88,9 @@ def trigger_eval(img):
     model=model.to(device)
     input = transform(img).unsqueeze(dim=0).to(device)
     outputs = model(input)
-    # 確率の最も高いクラスを予測ラベルとする。
     class_id = int(outputs.argmax(dim=1)[0])
     return class_id
+
 def riichi_eval(img):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     img=cv2pil(img)
@@ -97,9 +98,10 @@ def riichi_eval(img):
     model=model.to(device)
     input = transform(img).unsqueeze(dim=0).to(device)
     outputs = model(input)
-    # 確率の最も高いクラスを予測ラベルとする。
     class_id = int(outputs.argmax(dim=1)[0])
     return class_id
+
+
 def iou_np(a, b, a_area, b_area):
     abx_mn = np.maximum(a[0], b[:,0]) # xmin
     aby_mn = np.maximum(a[1], b[:,1]) # ymin

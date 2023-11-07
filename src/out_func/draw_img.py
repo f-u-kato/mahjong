@@ -713,6 +713,20 @@ def draw_result(result,field_points,player,size=(2160,3840,3),img=None,reduction
     
     return r_im
 
+def draw_player_points(points,field_points,player,size=(2160,3840,3),img=None,reduction=1):
+    if img is None:
+        img=np.zeros(size,np.uint8)
+    draw_points=([int(field_points[0][0]//reduction),int(field_points[0][1]//reduction)],[int(field_points[1][0]//reduction),int(field_points[1][1]//reduction)])
+
+    hai_size=max(draw_points[1][0]-draw_points[0][0],draw_points[1][1]-draw_points[0][1])//15
+    
+    middle=[draw_points[0][0]+(draw_points[1][0]-draw_points[0][0])//2,draw_points[0][1]+(draw_points[1][1]-draw_points[0][1])//2]
+    add=hai_size*2-hai_size//3
+    start_points=[[middle[0]-add,middle[1]-add],[middle[0]+add,middle[1]+add]]
+    
+    for i in range(len(points)):
+        add_img=num_img(points[i])
+
 def draw_honba(field_points,ton_player,round_wind,honba=0,size=(2160,3840,3),img=None,reduction=1):
     draw_points=([int(field_points[0][0]//reduction),int(field_points[0][1]//reduction)],[int(field_points[1][0]//reduction),int(field_points[1][1]//reduction)])
     draw_size=[int(size[0]//reduction),int(size[1]//reduction),3]

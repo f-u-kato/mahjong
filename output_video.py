@@ -245,11 +245,13 @@ def read_wintile(field_points,win_player,size,cap,cM,ton_player,m,dst,is_eval_dr
     
     def_img=draw.draw_player_rect(field_points,win_player,size,reduction=reduction)
     def_img=draw.draw_kaze(field_points,ton_player,img=def_img,reduction=reduction)
-    # for i in range(4):
-    #     img=draw.draw_player_rect(field_points,i+1,size,img)
+
     sM=show_img(def_img,m,field_points,dst=dst,reduction=reduction)
     img=def_img.copy()
     isFirst=True
+    
+    lose_player=0
+    
     while(cap.isOpened()):
         show_img(def_img,m,field_points,M=sM,reduction=reduction)
         for i in range(500):
@@ -266,13 +268,20 @@ def read_wintile(field_points,win_player,size,cap,cM,ton_player,m,dst,is_eval_dr
         new_im=im.copy()
         new_im=draw.draw_player_rect2(field_points,win_player,size,new_im)
         cv2.imshow("Camera", cv2.resize(new_im,(1920,1080)))
-        hai_img=get.get_wintile(field_points,win_player,im,size)
-        if in_hai(hai_img,0.9):
-            win_class,win_score,win_box=eval.win_eval(hai_img,0.8)
+        hai_images=[]
+        for i in range(4):
+            hai_images.append(get.get_wintile(field_points,i+1,im,size))
+        
+        win_evals=eval.multi_win_eval(hai_images,0.8)
+        for i,win_eval in enumerate(win_evals):
+            [win_class,win_score,win_box]=win_eval
             if len(win_class)>0 and win_class!=37:
+                lose_player=i+1
                 print('set ok')
                 music.play_music(LOAD_SE)
                 break
+        if lose_player>0:
+            break
         #結果の表示
         if is_eval_draw:
             hai_img=get.get_hand(field_points,win_player,im,size)
@@ -286,10 +295,10 @@ def read_wintile(field_points,win_player,size,cap,cM,ton_player,m,dst,is_eval_dr
             img=draw.draw_naki(field_points,naki_classes,naki_boxes,win_player,size,img,reduction=reduction)
         c=cv2.waitKey(1)
         if c == ord('q'):
-            return -1,-1
+            return -1,-1,0
         if c == ord('p'):
-            return -2,-2
-    return win_class,win_box
+            return -2,-2,0
+    return win_class,win_box,lose_player
 
 
 
@@ -417,7 +426,7 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_siz
             wait_no_wintile(field_points,win_player,size,dst,cap,cM,m,img,reduction=size[0]/read_size[0],save_movie=save_movie,effect=effect)
             
             #牌配置待機
-            win_class,win_box=read_wintile(field_points,win_player,size,cap,cM,ton_player,m,dst=dst,is_eval_draw=True,reduction=size[0]/read_size[0],save_movie=save_movie,effect=effect)
+            win_class,win_box,lose_player=read_wintile(field_points,win_player,size,cap,cM,ton_player,m,dst=dst,is_eval_draw=True,reduction=size[0]/read_size[0],save_movie=save_movie,effect=effect)
             if win_class==-1:
                 break
             if win_class==-2:
@@ -455,8 +464,9 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_siz
             print('naki',naki_scores)
             for naki_class in naki_classes:
                 print(MAHJONG_CLASSES[naki_class])
-            result=mahjong_calculation.mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,win_class,win_box,get_wind(win_player,ton_player),round_wind=round_wind,honba=honba)
-            # result=mahjong_calculation.haneman_result()
+            is_tsumo=win_player==lose_player
+            result=mahjong_calculation.mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,win_class,win_box,get_wind(win_player,ton_player),round_wind=round_wind,honba=honba,is_tsumo=is_tsumo)
+            
             draw_flag=True
             if result==-1:
                 music.play_music("./music/ビープ音1.mp3")
@@ -511,14 +521,27 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_siz
                 cv2.imshow("Camera", cv2.resize(im,(1920,1080)))
                 c=cv2.waitKey(1)
 
+                #終了
                 if c == ord('q'):
                     isRead=False
                     break
+                #点数間違い
                 if c == ord('p'):
                     break
-            cv2.imwrite("./result.png",cv2.resize(im,(1920,1080)))
-
     
+    #点数変更
+    if is_tsumo:
+        player_points[win_player-1]+=result.cost['main']+result.cost['additional']*2
+        #減点
+        for i in range(4):
+            if i+1!=win_player:
+                if i+1==ton_player:
+                    player_points[i]-=result.cost['main']
+                else:
+                    player_points[i]-=result.cost['additional']
+    else:
+        player_points[win_player-1]+=result.cost['main']
+        player_points[lose_player-1]-=result.cost['main']
     if ton_player==win_player:
         return 0,save_time,True
     else:
@@ -528,38 +551,32 @@ def main():
     now=datetime.datetime.now()
     time_df=pd.DataFrame()
     
+    #カメラの設定
     m=get_monitors()[1]
-    ton_player=1
-    honba=0
     cap = cv2.VideoCapture(1)
     cap.set(cv2.CAP_PROP_AUTOFOCUS,0)
     cap.set(cv2.CAP_PROP_FOCUS,0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH,3840)
 
-    #動画撮影用設定
+    #動画保存用設定
     effect=None
     effect=save_video(cap,"./save_movie/all_effect.mp4")
     save_movie=None
     save_movie=save_video(cap,"./save_movie/all_movie.mp4")
 
-
-    
-
+    #モデルを読み込んでおく
     _ = eval.trigger_eval(np.zeros([100,100,3],dtype=np.uint8))
     _,_,_ = eval.win_eval(np.zeros([100,100,3],dtype=np.uint8),0.9)
-    
     
     # カメラ調節
     while(cap.isOpened()):
         ret, im = cap.read()
         if ret:
             def_points=area.get_green(im)
-            color = (0, 0, 255)
-            # im,_=trans.transform_camera(im,dst=field_points)
             if len(def_points) > 0:
+                #判定領域の表示
                 new_im=im.copy()
-                
-                cv2.polylines(new_im,[def_points],True,color,4)
+                cv2.polylines(new_im,[def_points],True,(0, 0, 255),4)
                 cv2.imshow("Camera", cv2.resize(new_im,(1920,1080)))
 
                 if save_movie is not None:
@@ -615,7 +632,7 @@ def main():
         mask=area.get_rect(im,save_im)
         cv2.rectangle(im,def_points[0],def_points[1],(0,255,0),3)
         if len(mask)>0:
-            cv2.polylines(im,[mask],True,color,3)
+            cv2.polylines(im,[mask],True,(0, 0, 255),3)
             dst,isBreak=area.get_dst(field_points,mask,dst,max=size[0])
         cv2.imshow("mask", cv2.resize(im,(1920,1080)))
         img=np.zeros(size,np.uint8)
@@ -628,20 +645,25 @@ def main():
             break
 
     cv2.destroyAllWindows()
+    
+    #初期設定
     size=im.shape
     round_wind=0
     isContinue=True
-
     player_points=[25000,25000,25000,25000]
 
+    #ゲーム開始
     while(isContinue):
         while(ton_player<=4 and isContinue):
+            #局の開始
             win_result,time_df,isContinue=mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,save_time=time_df,round_wind=round_wind,honba=honba,save_movie=save_movie,effect=effect)
+            
             if win_result>0:
                 ton_player+=1
             honba+=1
             if win_result==1:
                 honba=0
+        
         ton_player=1
         round_wind+=1
         if round_wind>3:
@@ -652,7 +674,6 @@ def main():
     cap.release()
     music.play_music("./music/成功音.mp3")
     c=cv2.waitKey()
-    time_df.to_csv(str(now.date())+'-'+str(now.hour)+'-'+str(now.minute)+'.csv')
     effect.release()
 
 
