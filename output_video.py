@@ -76,12 +76,15 @@ def check_tile(field_points,im,size=(2160,3840,3),threshold=0.8):
     hai_size=max(field_points[1][0]-field_points[0][0],field_points[1][1]-field_points[0][1])//15
     hai_point=[hai_size*2+50,hai_size*2]
     field_size=[field_points[1][0]-field_points[0][0],field_points[1][1]-field_points[0][1]]
+    images=[]
     for i in range(4):
         img=get.get_trigger(field_points,i+1,im)
-        if in_hai(img):
-            classes = eval.trigger_eval(img)
-            if classes==0:
-                return i+1
+        images.append(img)
+
+    classes = eval.multi_trigger_eval(images)
+    for i,classes in enumerate(classes):
+        if len(classes)>0:
+            return i+1
     return 0
 
 #牌があるかの判定
@@ -148,9 +151,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba,d
     music.loop_music(PLAY_BGM[rand])
     count = 0
     video=cv2.VideoCapture(BACK_MOVIES[rand])
-    # i=0
-    # os.makedirs("./riichi/"+str(i),exist_ok=True)
-    # count=camera.get_max_int("./riichi/"+str(i))
+
     while(cap.isOpened()):
         ret, im = cap.read()
         im = trans.transform_camera(im,M=cM)
@@ -200,10 +201,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba,d
             effect.write(cv2.resize(img,(1920,1080)))
         show_img(img,m,field_points,M=sM,reduction=reduction)
         c = cv2.waitKey(1)
-        # if count%10==0:
-        #     print(count)
-        #     get_img=get.get_riichi(field_points,im,size)
-        #     cv2.imwrite(f"./riichi/{i}/{count}.png",get_img)
+
         if c == ord('q'):
             music.stop_music()
             music.play_music(RYOUKYOKU_SE)
@@ -212,14 +210,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba,d
             music.stop_music()
             music.play_music(RYOUKYOKU_SE)
             return -2
-        # elif c == ord('c'):
-        #     print('stop')
-        #     i=1
-        #     os.makedirs("./riichi/"+str(i),exist_ok=True)
-        #     count=camera.get_max_int("./riichi/"+str(i))
-        #     cv2.waitKey()
-        #     print('start')
-        # count+=1
+
     return win_player
 
 def wait_no_wintile(field_points,win_player,size,dst,cap,cM,m,im=None,reduction=1,save_movie=None,effect=None):
