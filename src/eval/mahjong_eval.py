@@ -80,6 +80,15 @@ transform=transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
         ])
+def multi_trigger_eval(imgs):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    imgs=[cv2pil(img) for img in imgs]
+    model =torch.load('./weights/resnet18/model_20.pth')
+    model=model.to(device)
+    inputs = torch.stack([transform(img).to(device) for img in imgs])
+    outputs = model(inputs)
+    class_ids = outputs.argmax(dim=1)
+    return class_ids
 
 def trigger_eval(img):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
