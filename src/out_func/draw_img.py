@@ -531,13 +531,13 @@ def draw_points(field_points,player_points,size=(2160,3840,3),img=None,reduction
             add_img=cv2.rotate(add_img, cv2.ROTATE_180)
             pt1 = [draw_points[0][0]+hai_size,draw_points[0][1]+hai_size]
         elif i == 3:
-            pt1 = [draw_points[1][0]-hai_size-add_img.shape[0],draw_points[0][1]+hai_size]
+            pt1 = [draw_points[1][0]-hai_size-add_img.shape[1],draw_points[0][1]+hai_size]
         elif i == 2:
             add_img=cv2.rotate(add_img, cv2.ROTATE_90_CLOCKWISE)
-            pt1 = [draw_points[1][0]-hai_size-add_img.shape[0],draw_points[1][1]-hai_size-add_img.shape[1]]
+            pt1 = [draw_points[1][0]-hai_size-add_img.shape[1],draw_points[1][1]-hai_size-add_img.shape[0]]
         elif i == 1:
             add_img=cv2.rotate(add_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            pt1 = [draw_points[0][0]+hai_size,draw_points[1][1]-hai_size-add_img.shape[1]]
+            pt1 = [draw_points[0][0]+hai_size,draw_points[1][1]-hai_size-add_img.shape[0]]
         img=place_img(img,add_img,draw_points,pt1)
     return img
 
