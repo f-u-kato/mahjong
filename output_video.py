@@ -365,6 +365,7 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_siz
     img=draw.draw_rect(field_points,size,reduction=reduction)
     img=draw.draw_ura_rect(field_points,size,img,reduction=reduction)
     img=draw.draw_kaze(field_points,ton_player,img=img,reduction=reduction)
+    img=draw.draw_points(field_points,player_points,img=img,reduction=reduction)
     # img=draw.draw_honba(field_points,ton_player,round_wind,honba,img=img,reduction=reduction)
     
     #投影
