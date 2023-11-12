@@ -668,6 +668,8 @@ def main():
         
         ton_player=1
         round_wind+=1
+        if player_points[0]<0 or player_points[1]<0 or player_points[2]<0 or player_points[3]<0:
+            isContinue=False
         if round_wind>3:
             round_wind=0
         print(round_wind)
