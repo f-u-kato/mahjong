@@ -13,7 +13,7 @@ MAHJONG_CLASSES = ("1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m",
                    "ura")
 
 NUM_IMAGES = ['./material/points/0.png','./material/points/1.png','./material/points/2.png','./material/points/3.png','./material/points/4.png','./material/points/5.png',
-              './material/points/6.png','./material/points/7.png','./material/points/8.png','./material/points/9.png']
+              './material/points/6.png','./material/points/7.png','./material/points/8.png','./material/points/9.png','./material/points/-.png']
 
 HAN_IMAGE='./material/points/han.png'
 FU_IMAGE='./material/points/fu.png'
@@ -518,7 +518,7 @@ def draw_ura_rect(field_points,size=(2160,3840,3),img=None,reduction=1):
 
     
 #点数表示
-def draw_points(field_points,player_points,size=(2160,3840,3),img=None,reduction=1):
+def draw_player_points(field_points,player_points,size=(2160,3840,3),img=None,reduction=1):
     draw_points=([int(field_points[0][0]//reduction),int(field_points[0][1]//reduction)],[int(field_points[1][0]//reduction),int(field_points[1][1]//reduction)])
     draw_size=[int(size[0]//reduction),int(size[1]//reduction),3]
     hai_size=max(draw_points[1][0]-draw_points[0][0],draw_points[1][1]-draw_points[0][1])//15
@@ -574,9 +574,16 @@ def draw_kaze(field_points,player,size=(2160,3840,3),img=None,reduction=1):
     return r_im
 
 def num_img(num):
+    minus=False
+    if num<0:
+        minus=True
+        num=-num
     num=str(num)
-    size=(100,70*len(num),4)
+    size=(100,70*len(num)+minus,4)
     img=np.zeros(size,np.uint8)
+    if minus:
+        add_img=cv2.imread(NUM_IMAGES[-1],-1)
+        img[:,i*70:(i+1)*70]=add_img
     for i,one_num in enumerate(num):
         add_img=cv2.imread(NUM_IMAGES[int(one_num)],-1)
         img[:,i*70:(i+1)*70]=add_img
@@ -736,19 +743,7 @@ def draw_result(result,field_points,player,size=(2160,3840,3),img=None,reduction
     
     return r_im
 
-def draw_player_points(points,field_points,player,size=(2160,3840,3),img=None,reduction=1):
-    if img is None:
-        img=np.zeros(size,np.uint8)
-    draw_points=([int(field_points[0][0]//reduction),int(field_points[0][1]//reduction)],[int(field_points[1][0]//reduction),int(field_points[1][1]//reduction)])
 
-    hai_size=max(draw_points[1][0]-draw_points[0][0],draw_points[1][1]-draw_points[0][1])//15
-    
-    middle=[draw_points[0][0]+(draw_points[1][0]-draw_points[0][0])//2,draw_points[0][1]+(draw_points[1][1]-draw_points[0][1])//2]
-    add=hai_size*2-hai_size//3
-    start_points=[[middle[0]-add,middle[1]-add],[middle[0]+add,middle[1]+add]]
-    
-    for i in range(len(points)):
-        add_img=num_img(points[i])
 
 def draw_honba(field_points,ton_player,round_wind,honba=0,size=(2160,3840,3),img=None,reduction=1):
     draw_points=([int(field_points[0][0]//reduction),int(field_points[0][1]//reduction)],[int(field_points[1][0]//reduction),int(field_points[1][1]//reduction)])

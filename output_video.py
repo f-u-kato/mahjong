@@ -665,11 +665,12 @@ def main():
             honba+=1
             if win_result==1:
                 honba=0
-        
+            if player_points[0]<0 or player_points[1]<0 or player_points[2]<0 or player_points[3]<0:
+                isContinue=False
+                break
         ton_player=1
         round_wind+=1
-        if player_points[0]<0 or player_points[1]<0 or player_points[2]<0 or player_points[3]<0:
-            isContinue=False
+        
         if round_wind>3:
             round_wind=0
         print(round_wind)
@@ -677,6 +678,9 @@ def main():
         
     cap.release()
     music.play_music("./music/成功音.mp3")
+    img=draw.draw_kaze(field_points,ton_player,img=img,reduction=reduction)
+    img=draw.draw_points(field_points,player_points,img=img,reduction=reduction)
+    show_img(img,m,field_points,dst=dst,reduction=reduction)
     c=cv2.waitKey()
     effect.release()
 
