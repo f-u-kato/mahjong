@@ -745,18 +745,26 @@ def draw_honba(field_points,ton_player,round_wind,honba=0,player_points=[0,0,0,0
     #点数表示
     for i in range(4):
         add_img=num_img(player_points[i])
-        add_img=cv2.resize(add_img,[int(add_img.shape[1]//reduction),int(add_img.shape[0]//reduction)])
+        add_img=cv2.resize(add_img,[int(add_img.shape[1]*0.8//reduction),int(add_img.shape[0]*0.8//reduction)])
         if i == 0:
             add_img=cv2.rotate(add_img, cv2.ROTATE_180)
             pt1 = start_points[1]
+            pt1[1]-=add_img.shape[0]
+            pt1[0]-=add_img.shape[1]
         elif i == 3:
             pt1 = start_points[0]
+            pt1[1]-=add_img.shape[0]
+            pt1[0]-=add_img.shape[1]
         elif i == 2:
             add_img=cv2.rotate(add_img, cv2.ROTATE_90_CLOCKWISE)
             pt1 = [start_points[1][0],start_points[0][1]]
+            pt1[1]-=add_img.shape[0]
+            pt1[0]-=add_img.shape[1]
         elif i == 1:
             add_img=cv2.rotate(add_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
             pt1 = [start_points[0][0],start_points[1][1]]
+            pt1[1]-=add_img.shape[0]
+            pt1[0]-=add_img.shape[1]
         img=place_img(img,add_img,draw_points,pt1)
     char_size=add_img.shape[0]
     #場風
