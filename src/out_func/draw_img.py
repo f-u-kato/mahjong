@@ -370,7 +370,8 @@ def draw_player_rect(field_points,player,size=(2160,3840,3),img=None,first=False
     for i in range(4):
         [pt1,pt2]=draw_player_wintile(field_points,i+1,size,img,first,color,return_points,reduction)
         cv2.rectangle(img, pt1, pt2, color,int(3//reduction))
-        points.append([pt1,pt2])
+        if i+1==player:
+            points.append([pt1,pt2])
     if return_points:
         return points
     return img

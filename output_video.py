@@ -474,7 +474,6 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_siz
             #演出表示
             if agari!=-1:
                 draw_movie(field_points,size,m,cap,win_player,cM,agari,dst=dst,save_movie=save_movie,effect=effect)
-            
             #結果の表示
             music.play_music(POINT_SE[agari+1])
             reduction=size[0]/read_size[0]
@@ -482,7 +481,7 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_siz
             img=draw.draw_hand(field_points,hand_classes,hand_boxes,win_player,size,img,reduction=reduction)
             img=draw.draw_dora(field_points,dora_classes,dora_boxes,win_player,size,img,reduction=reduction)
             img=draw.draw_naki(field_points,naki_classes,naki_boxes,win_player,size,img,reduction=reduction)
-            img=draw.draw_wintile(field_points,win_class,win_box,win_player,size,img,reduction=reduction)
+            img=draw.draw_wintile(field_points,win_class,win_box,lose_player,size,img,reduction=reduction)
             img=draw.draw_kaze(field_points,ton_player,img=img,reduction=reduction)
             _=show_img(img,m,field_points,dst=dst,reduction=reduction)
             cv2.waitKey(1)
@@ -493,7 +492,7 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_siz
                 img=draw.draw_hand(field_points,hand_classes,hand_boxes,win_player,size,img,reduction=reduction)
                 img=draw.draw_dora(field_points,dora_classes,dora_boxes,win_player,size,img,reduction=reduction)
                 img=draw.draw_naki(field_points,naki_classes,naki_boxes,win_player,size,img,reduction=reduction)
-                img=draw.draw_wintile(field_points,win_class,win_box,win_player,size,img,reduction=reduction)
+                img=draw.draw_wintile(field_points,win_class,win_box,lose_player,size,img,reduction=reduction)
                 img=draw.draw_kaze(field_points,ton_player,img=img,reduction=reduction)
                 time.sleep(1)
                 if agari==4:
