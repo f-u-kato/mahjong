@@ -133,7 +133,7 @@ def save_video(camera,name):
     return video
 
 
-def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba,dst,reduction=1,save_movie=None,effect=None):
+def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba,dst,player_points,reduction=1,save_movie=None,effect=None):
     isRiichi=False
     r_flag=True
     rcount=0
@@ -144,6 +144,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba,d
     img = draw.draw_kaze(field_points,ton_player,img=img,reduction=reduction)
     img = draw.draw_honba(field_points,ton_player,round_wind,honba,img=img,reduction=reduction)
     img=draw.draw_riichi(field_points,img=img,reduction=reduction)
+    img=draw.draw_points(field_points,player_points,img=img,reduction=reduction)
     sM=show_img(img,m,field_points,dst=dst,reduction=reduction)
     cv2.waitKey(1)
     #音楽再生
@@ -197,6 +198,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba,d
         img = draw.draw_honba(field_points,ton_player,round_wind,honba,img=img,reduction=reduction)
 
         img=draw.draw_riichi(field_points,img=img,reduction=reduction)
+        img=draw.draw_points(field_points,player_points,img=img,reduction=reduction)
         if effect is not None:
             effect.write(cv2.resize(img,(1920,1080)))
         show_img(img,m,field_points,M=sM,reduction=reduction)
@@ -401,7 +403,7 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_siz
     isRead=True
     while(isRead):
         reduction=size[0]/min_size[0]
-        win_player=read_trigger(cap,field_points,size,cM,ton_player,m,round_wind,honba,dst=dst,reduction=reduction,save_movie=save_movie,effect=effect)
+        win_player=read_trigger(cap,field_points,size,cM,ton_player,m,round_wind,honba,dst=dst,player_points=player_points,reduction=reduction,save_movie=save_movie,effect=effect)
         st_time=time.time()
         if win_player==-1:
             return 0,save_time,True
@@ -488,6 +490,7 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_siz
             img=draw.draw_naki(field_points,naki_classes,naki_boxes,win_player,size,img,reduction=reduction)
             img=draw.draw_wintile(field_points,win_class,win_box,lose_player,size,img,reduction=reduction)
             img=draw.draw_kaze(field_points,ton_player,img=img,reduction=reduction)
+            img=draw.draw_points(field_points,player_points,img=img,reduction=reduction)
             _=show_img(img,m,field_points,dst=dst,reduction=reduction)
             cv2.waitKey(1)
             
@@ -499,6 +502,7 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_siz
                 img=draw.draw_naki(field_points,naki_classes,naki_boxes,win_player,size,img,reduction=reduction)
                 img=draw.draw_wintile(field_points,win_class,win_box,lose_player,size,img,reduction=reduction)
                 img=draw.draw_kaze(field_points,ton_player,img=img,reduction=reduction)
+                img=draw.draw_points(field_points,player_points,img=img,reduction=reduction)
                 time.sleep(1)
                 if agari==4:
                     time.sleep(1)
