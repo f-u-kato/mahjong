@@ -82,8 +82,8 @@ def check_tile(field_points,im,size=(2160,3840,3),threshold=0.8):
         images.append(img)
 
     classes = eval.multi_trigger_eval(images)
-    for i,classes in enumerate(classes):
-        if len(classes)>0:
+    for i,class_num in enumerate(classes):
+        if class_num==0:
             return i+1
     return 0
 
@@ -533,6 +533,7 @@ def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_siz
     else:
         player_points[win_player-1]+=result.cost['main']
         player_points[lose_player-1]-=result.cost['main']
+    print(player_points)
     if ton_player==win_player:
         return 0,save_time,True
     else:
@@ -642,6 +643,8 @@ def main():
     round_wind=0
     isContinue=True
     player_points=[25000,25000,25000,25000]
+    ton_player=1
+    honba=0
 
     #ゲーム開始
     while(isContinue):

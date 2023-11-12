@@ -359,11 +359,11 @@ def mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,wi
 
     
     melds,naki_aka,add_tiles=mahjong_naki(naki_classes,naki_boxes)
-    dora_indicators,is_riichi,is_ippatu=mahjong_dora(dora_classes,dora_boxes)
+    dora_indicators,is_riichi,is_ippatsu=mahjong_dora(dora_classes,dora_boxes)
     win_tile,win_aka=mahjong_win(win_class[0],win_box[0])
     tiles,hand_aka=mahjong_hand(hand_classes,win_class[0],add_tiles)
     has_aka_dora=hand_aka | naki_aka | win_aka
-    config = HandConfig(is_riichi = is_riichi,is_tsumo = is_tsumo,player_wind=player_wind,round_wind=round_wind,is_ippatu=is_ippatu,options=OptionalRules(has_open_tanyao=True, has_aka_dora=has_aka_dora,fu_for_open_pinfu=False))
+    config = HandConfig(is_riichi = is_riichi,is_tsumo = is_tsumo,player_wind=player_wind,round_wind=round_wind,is_ippatsu=is_ippatsu,options=OptionalRules(has_open_tanyao=True, has_aka_dora=has_aka_dora,fu_for_open_pinfu=False))
     result = calculator.estimate_hand_value(tiles, win_tile, melds, dora_indicators, config)
     #本場計算
     print(melds)

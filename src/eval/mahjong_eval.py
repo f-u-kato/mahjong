@@ -1,4 +1,4 @@
-from data import COCODetection, get_label_map, MEANS, COLORS
+# from data import COCODetection, get_label_map, MEANS, COLORS
 from yolact import Yolact
 from utils.augmentations import BaseTransform, FastBaseTransform, Resize
 from utils.functions import MovingAverage, ProgressBar
@@ -256,8 +256,8 @@ def multi_win_eval(imgs,score_threshold=0.5):
         batch = FastBaseTransform()(batch)
         preds = net(batch)
         top_k=1
-        for pred in preds:
-            results.append(win_results(pred,w,h,score_threshold,top_k))
+        for one_preds in preds:
+            results.append(win_results([one_preds],w,h,score_threshold,top_k))
 
     return results
 
@@ -474,20 +474,8 @@ def prep_display(classes,boxes,img):
 
 
 if __name__=='__main__':
-        i=33
-        for i in range(22):
-            print(i)
-            if i == 8:
-                continue
-            img=cv2.imread(f'./data/test/hand{i}.png')
-            c,s,b=hand_eval(img)
-            img_numpy = prep_display(c,b,img)
-            
-            cv2.imshow('',img_numpy)
-            cv2.waitKey()
-            continue
-            
-            c.sort()
-            for num in c:
-                print(MAHJONG_CLASSES[num],end=',')
-            print('')
+        images=[]
+
+        for i in range(4):
+            images.appned(cv2.imread(f"./save/win{i}.png"))
+        multi_win_eval(images)
