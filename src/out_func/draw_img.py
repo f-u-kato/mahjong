@@ -728,7 +728,7 @@ def draw_player_points(points,field_points,player,size=(2160,3840,3),img=None,re
     for i in range(len(points)):
         add_img=num_img(points[i])
 
-def draw_honba(field_points,ton_player,round_wind,honba=0,size=(2160,3840,3),img=None,reduction=1):
+def draw_honba(field_points,ton_player,round_wind,honba=0,player_points=[0,0,0,0],size=(2160,3840,3),img=None,reduction=1):
     draw_points=([int(field_points[0][0]//reduction),int(field_points[0][1]//reduction)],[int(field_points[1][0]//reduction),int(field_points[1][1]//reduction)])
     draw_size=[int(size[0]//reduction),int(size[1]//reduction),3]
     if img is None:
@@ -741,14 +741,31 @@ def draw_honba(field_points,ton_player,round_wind,honba=0,size=(2160,3840,3),img
     middle=[draw_points[0][0]+(draw_points[1][0]-draw_points[0][0])//2,draw_points[0][1]+(draw_points[1][1]-draw_points[0][1])//2]
     add=hai_size*2-hai_size//3
     start_points=[[middle[0]-add,middle[1]-add],[middle[0]+add,middle[1]+add]]
-    
+
+    #点数表示
+    for i in range(4):
+        add_img=num_img(player_points[i])
+        add_img=cv2.resize(add_img,[int(add_img.shape[1]//reduction),int(add_img.shape[0]//reduction)])
+        if i == 0:
+            add_img=cv2.rotate(add_img, cv2.ROTATE_180)
+            pt1 = start_points[1]
+        elif i == 3:
+            pt1 = start_points[0]
+        elif i == 2:
+            add_img=cv2.rotate(add_img, cv2.ROTATE_90_CLOCKWISE)
+            pt1 = [start_points[1][0],start_points[0][1]]
+        elif i == 1:
+            add_img=cv2.rotate(add_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            pt1 = [start_points[0][0],start_points[1][1]]
+        img=place_img(img,add_img,draw_points,pt1)
+    char_size=add_img.shape[0]
     #場風
     add_img=cv2.imread(kaze_img[round_wind],-1)
     add_img=cv2.resize(add_img,[int(add_img.shape[1]//reduction),int(add_img.shape[0]//reduction)])
     add_img=cv2.rotate(add_img, cv2.ROTATE_180)
     pt1 = start_points[1]
-    pt1[1]-=add_img.shape[0]
-    pt1[0]-=add_img.shape[1]
+    pt1[1]-=add_img.shape[0]+char_size
+    pt1[0]-=add_img.shape[1]+char_size
     img=place_img(img,add_img,draw_points,pt1)
 
     #局数

@@ -223,7 +223,11 @@ def wait_no_wintile(field_points,win_player,size,dst,cap,cM,m,im=None,reduction=
             save_movie.write(cv2.resize(im,(1920,1080)))
         if effect is not None:
             effect.write(cv2.resize(img,(1920,1080)))
-        if not in_hai(get.get_wintile(field_points,win_player,im,size)):
+        isHai=False
+        for i in range(4):
+            if in_hai(get.get_wintile(field_points,i+1,im,size)):
+                isHai=True
+        if not isHai:
             break
         if cv2.waitKey(1) & 0xFF == ord('q'):
             music.stop_music()
