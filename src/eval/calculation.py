@@ -3,6 +3,7 @@
 import numpy as np
 #計算
 from mahjong.hand_calculating.hand import HandCalculator
+from mahjong.hand_calculating.scores import Aotenjou, ScoresCalculator
 #麻雀牌
 from mahjong.tile import TilesConverter
 #役, オプションルール
@@ -355,7 +356,7 @@ def mahjong_win(win_class,box):
     return win_tile,has_aka_dora,is_rinshan
 
 
-def mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,win_class,win_box,player_wind,round_wind=0,honba=0,is_tsumo=False):
+def mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,win_class,win_box,player_wind,round_wind=0,honba=0,kyotaku=0,nuki_dora=0,is_tsumo=False):
     player_wind=WIND_CLASSES[player_wind]
     round_wind=WIND_CLASSES[round_wind]
 
@@ -365,16 +366,20 @@ def mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,wi
     win_tile,win_aka,is_rinshan=mahjong_win(win_class[0],win_box[0])
     tiles,hand_aka=mahjong_hand(hand_classes,win_class[0],add_tiles)
     has_aka_dora=hand_aka | naki_aka | win_aka
-    config = HandConfig(is_riichi = is_riichi,is_tsumo = is_tsumo,player_wind=player_wind,round_wind=round_wind,is_ippatsu=is_ippatsu,is_rinshan=is_rinshan,options=OptionalRules(has_open_tanyao=True, has_aka_dora=has_aka_dora,fu_for_open_pinfu=False))
+    config = HandConfig(is_riichi = is_riichi,is_tsumo = is_tsumo,player_wind=player_wind,round_wind=round_wind,is_ippatsu=is_ippatsu,is_rinshan=is_rinshan,tsumi_number=honba,kyoutaku_number=kyotaku,options=OptionalRules(has_open_tanyao=True, has_aka_dora=has_aka_dora,fu_for_open_pinfu=False))
     result = calculator.estimate_hand_value(tiles, win_tile, melds, dora_indicators, config)
+    #抜きドラ計算
+    result.han+=nuki_dora 
+    scores_calculator = ScoresCalculator()
+    scores = scores_calculator.calculate_scores(result.han, result.fu, config, len(result.yaku) > 0)
     #本場計算
     print(melds)
-    if result.cost is not None:
-        if is_tsumo:
-            result.cost['additional']+=100*honba
-            result.cost["main"]+=100*honba
-        else:
-            result.cost['main']+=300*honba
+    # if result.cost is not None:
+    #     if is_tsumo:
+    #         result.cost['additional']+=100*honba
+    #         result.cost["main"]+=100*honba
+    #     else:
+    #         result.cost['main']+=300*honba
     return result
 
 
