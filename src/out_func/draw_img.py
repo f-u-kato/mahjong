@@ -144,6 +144,8 @@ def draw_riichi(field_points,size=(2160,3840,3),img=None,reduction=1):
     middle=[draw_points[0][0]+(draw_points[1][0]-draw_points[0][0])//2,draw_points[0][1]+(draw_points[1][1]-draw_points[0][1])//2]
     add=hai_size*2-hai_size//3
     cv2.rectangle(img,[middle[0]-add,middle[1]-add],[middle[0]+add,middle[1]+add], color,int(int(3//reduction)))
+    add=hai_size*2-hai_size//2
+    cv2.rectangle(img,[middle[0]-add,middle[1]-add],[middle[0]+add,middle[1]+add], color,int(int(3//reduction)))
     return img
 
 def draw_riichi2(field_points,img,size=(2160,3840,3),color=(0,255,0)):

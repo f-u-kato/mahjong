@@ -134,7 +134,7 @@ def save_video(camera,name):
 
 
 def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba,dst,player_points,reduction=1,save_movie=None,effect=None):
-    isRiichi=False
+    isRiichi=[False,False,False,False]
     r_flag=True
     rcount=0
     r_video=None
@@ -359,7 +359,7 @@ def draw_movie(field_points,size,m,cap,win_player,cM,agari,dst,min_size=(540,960
 
     video.release()
     return
-def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_size=(540,960,3),save_time=None,round_wind=0,honba=0,save_movie=None,effect=None):
+def mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,min_size=(540,960,3),save_time=None,round_wind=0,honba=0,kyotaku=0,save_movie=None,effect=None):
     #表示倍率
     reduction=size[0]/min_size[0]
     
@@ -653,12 +653,13 @@ def main():
     player_points=[25000,25000,25000,25000]
     ton_player=1
     honba=0
+    kyotaku=0
 
     #ゲーム開始
     while(isContinue):
         while(ton_player<=4 and isContinue):
             #局の開始
-            win_result,time_df,isContinue=mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,save_time=time_df,round_wind=round_wind,honba=honba,save_movie=save_movie,effect=effect)
+            win_result,time_df,isContinue=mahjong_main(cap,m,dst,ton_player,field_points,cM,size,player_points,save_time=time_df,round_wind=round_wind,honba=honba,kyotaku=kyotaku,save_movie=save_movie,effect=effect)
             
             if win_result>0:
                 ton_player+=1
