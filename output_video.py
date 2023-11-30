@@ -649,7 +649,7 @@ def main():
     #初期設定
     size=im.shape
     round_wind=0
-    isContinue=Truedraw.draw_player_points
+    isContinue=True
     player_points=[25000,25000,25000,25000]
     ton_player=1
     honba=0
@@ -683,12 +683,9 @@ def main():
     show_img(img,m,field_points,dst=dst,reduction=reduction)
     c=cv2.waitKey()
     effect.release()
-
-
     return
 
 
 
 if __name__ == '__main__':
-    # camera.riichi_camera()
     main()
