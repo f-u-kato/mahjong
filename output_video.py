@@ -167,19 +167,18 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba,d
         im=draw.draw_riichi2(field_points,im,size)
         cv2.imshow("Camera", cv2.resize(im,(1920,1080)))
         
-        if not isRiichi:
-            if eval.riichi_eval(get.get_riichi(field_points,im))==1:
-                rcount+=1
-                if rcount>5:
-                    music.stop_music()
-                    r_video=cv2.VideoCapture(RIICHI_VIDEO)
-                    music.play_music(RIICHI_SE[0])
-                    speed*=2
-                    isRiichi=True
-                else:
-                    isRiichi=False
+        if eval.riichi_eval(get.get_riichi(field_points,im))==1:
+            rcount+=1
+            if rcount>5:
+                music.stop_music()
+                r_video=cv2.VideoCapture(RIICHI_VIDEO)
+                music.play_music(RIICHI_SE[0])
+                speed*=2
+                isRiichi=True
             else:
-                rcount=0
+                isRiichi=False
+        else:
+            rcount=0
 
         img=draw.loop_movie(field_points,video,size,ton_player,reduction=reduction,speed=speed)
         
