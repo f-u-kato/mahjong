@@ -182,16 +182,16 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba,d
 
         img=draw.loop_movie(field_points,video,size,ton_player,reduction=reduction,speed=speed)
         
-        if isRiichi and r_flag:
-            _,_=r_video.read()
-            _,_=r_video.read()
-            tmp_img = draw.back_place(r_video,img,field_points,ton_player,reduction=reduction,skelton=True)
-            if tmp_img is None:
-                r_flag=False
-                r_video.release()
-                music.loop_music(RIICHI_BGM[rand])
-            else:
-                img=tmp_img
+        # if isRiichi and r_flag:
+        #     _,_=r_video.read()
+        #     _,_=r_video.read()
+        #     tmp_img = draw.back_place(r_video,img,field_points,ton_player,reduction=reduction,skelton=True)
+        #     if tmp_img is None:
+        #         r_flag=False
+        #         r_video.release()
+        #         music.loop_music(RIICHI_BGM[rand])
+        #     else:
+        #         img=tmp_img
         img = draw.draw_rect_movie(field_points,trigger,size,img=img,reduction=reduction)
         img = draw.draw_kaze(field_points,ton_player,img=img,reduction=reduction)
         img = draw.draw_honba(field_points,ton_player,round_wind,honba,img=img,reduction=reduction)
