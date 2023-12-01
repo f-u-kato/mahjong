@@ -278,6 +278,7 @@ def draw_player_naki(field_points, player, size=(2160, 3840, 3), img=None, first
     if img is None:
         img = np.zeros(draw_size, np.uint8)
     hai_size = max(draw_points[1][0]-draw_points[0][0], draw_points[1][1]-draw_points[0][1])//15
+    pt1,pt2=[0,0],[0,0]
     # 鳴き牌
     if player == 0:
         pt1 = [draw_points[0][0]+hai_size, draw_points[0][1]]
@@ -540,16 +541,16 @@ def draw_ura_rect(field_points, size=(2160, 3840, 3), img=None, reduction=1):
     if img is None:
         img = np.zeros(draw_size, np.int8)
     color = (0, 255, 0, 255)
-    points = draw_player_rect(draw_points, 1, return_points=True)
+    points = draw_player_rect(draw_points, 0, return_points=True)
     pt1, pt2 = min_max_xy(points[0][0], points[0][1])
     y1 = pt2[1]
-    points = draw_player_rect(draw_points, 2, return_points=True)
+    points = draw_player_rect(draw_points, 1, return_points=True)
     pt1, pt2 = min_max_xy(points[2][0], points[2][1])
     x1 = pt2[0]
-    points = draw_player_rect(draw_points, 3, return_points=True)
+    points = draw_player_rect(draw_points, 2, return_points=True)
     pt1, pt2 = min_max_xy(points[0][0], points[0][1])
     y2 = pt1[1]
-    points = draw_player_rect(draw_points, 4, return_points=True)
+    points = draw_player_rect(draw_points, 3, return_points=True)
     pt1, pt2 = min_max_xy(points[2][0], points[2][1])
     x2 = pt1[0]
     cv2.rectangle(img, [x1, y1], [x2, y2], color, int(int(3//reduction)))

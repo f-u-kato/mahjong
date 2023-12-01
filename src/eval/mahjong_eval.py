@@ -120,7 +120,7 @@ def trigger_eval(img):
 
 def multi_riichi_eval(imgs):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    imgs = [padding_riichi(img.copy()) for img in imgs]
+    imgs = [cv2pil(padding_riichi(img)) for img in imgs]
     model = torch.load('./weights/riichi/model_20.pth')
     model = model.to(device)
     inputs = torch.stack([transform(img).to(device) for img in imgs])

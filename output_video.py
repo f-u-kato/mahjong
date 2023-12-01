@@ -76,9 +76,6 @@ def get_wind(player_num, ton_num):
 
 
 def check_tile(field_points, im, size=(2160, 3840, 3), threshold=0.8):
-    hai_size = max(field_points[1][0]-field_points[0][0], field_points[1][1]-field_points[0][1])//15
-    hai_point = [hai_size*2+50, hai_size*2]
-    field_size = [field_points[1][0]-field_points[0][0], field_points[1][1]-field_points[0][1]]
     images = []
     for i in range(4):
         img = get.get_trigger(field_points, i, im)
@@ -91,8 +88,6 @@ def check_tile(field_points, im, size=(2160, 3840, 3), threshold=0.8):
     return -1
 
 # 牌があるかの判定
-
-
 def in_hai(img, a=0.9):
     height, width, channels = img.shape[:3]
     hsvLower = np.array([30, 50, 40])    # 抽出する色の下限(HSV)
@@ -144,7 +139,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
     # 立直の判定
     isRiichi = [False, False, False, False]
     # 立直判定のカウント
-    rcount = [0, 0, 0, 0]
+    r_count = [0, 0, 0, 0]
     r_max = 5
     r_video = None
     # 動画の再生速度
@@ -181,7 +176,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
 
         # カメラ映像の表示
         im = draw.draw_rect2(field_points, size, im)
-        im = draw.draw_riichi2(field_points, im, size)
+        # im = draw.draw_riichi2(field_points, im, size)
         cv2.imshow("Camera", cv2.resize(im, (1920, 1080)))
 
         # 立直判定
@@ -192,8 +187,8 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
             riichi_evals = eval.multi_riichi_eval(riichi_images)
             for i, riichi_eval in enumerate(riichi_evals):
                 if riichi_eval == 1 and not isRiichi[i]:
-                    rcount[i] += 1
-                    if rcount[i] > r_max:
+                    r_count[i] += 1
+                    if r_count[i] > r_max:
                         if r_video is None:
                             music.stop_music()
                         r_video = cv2.VideoCapture(RIICHI_VIDEO)
@@ -203,7 +198,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
                     else:
                         isRiichi[i] = False
                 else:
-                    rcount[i] = 0
+                    r_count[i] = 0
 
         # 背景動画の投影
         img = draw.loop_movie(field_points, video, size, ton_player, reduction=reduction, speed=speed)
@@ -247,8 +242,6 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
     return win_player
 
 # 上がり牌配置領域に牌がなくなるまで待機
-
-
 def wait_no_wintile(field_points, win_player, size, dst, cap, cM, m, im=None, reduction=1, save_movie=None, effect=None):
     img = draw.draw_player_rect(field_points, win_player, size, first=True, img=im, reduction=reduction)
     show_img(img, m, field_points, dst=dst, reduction=reduction)
@@ -270,8 +263,6 @@ def wait_no_wintile(field_points, win_player, size, dst, cap, cM, m, im=None, re
             break
 
 # 上がり牌のチェック
-
-
 def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is_eval_draw=True, reduction=1, save_movie=None, effect=None):
     # SEの再生
     music.stop_music()

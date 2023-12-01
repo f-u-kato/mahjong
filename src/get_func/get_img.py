@@ -31,7 +31,7 @@ def get_agari(result):
         return -1
 
 
-def get_riichi(field_points, player, img=None, size=(2160, 3840, 3), color=(0, 255, 0), get_points=False):
+def get_riichi(field_points, player, img=None, get_points=False):
     hai_size = max(field_points[1][0]-field_points[0][0], field_points[1][1]-field_points[0][1])//15
     middle = [field_points[0][0]+(field_points[1][0]-field_points[0][0])//2, field_points[0][1]+(field_points[1][1]-field_points[0][1])//2]
     add = hai_size*2-hai_size//3
@@ -48,11 +48,10 @@ def get_riichi(field_points, player, img=None, size=(2160, 3840, 3), color=(0, 2
     elif player == 3:
         pt1 = [middle[0]-add, middle[1]-add]
         pt2 = [middle[0]+add, middle[1]-small_add]
-
+    pt1,pt2=min_max_xy(pt1,pt2)
     if get_points:
         return pt1, pt2
     im = img[pt1[1]:pt2[1], pt1[0]:pt2[0], :]
-
     return im
 
 
