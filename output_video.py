@@ -235,13 +235,13 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         if c == ord('q'):
             music.stop_music()
             music.play_se(RYOUKYOKU_SE)
-            return -1
+            return -1, isRiichi
         elif c == ord('p'):
             music.stop_music()
             music.play_se(RYOUKYOKU_SE)
-            return -2
+            return -2 , isRiichi
 
-    return win_player
+    return win_player, isRiichi
 
 # 上がり牌配置領域に牌がなくなるまで待機
 def wait_no_wintile(field_points, win_player, size, dst, cap, cM, m, im=None, reduction=1, save_movie=None, effect=None):
@@ -442,15 +442,18 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             return 0, save_time, False
 
     isRead = True
+    isRiichi = [False, False, False, False]
     while (isRead):
         reduction = size[0]/min_size[0]
-        win_player = read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, dst=dst,
+        win_player,isRiichi = read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, dst=dst,
                                   player_points=player_points, reduction=reduction, save_movie=save_movie, effect=effect)
+        
+        kyotaku+=sum(isRiichi)
         st_time = time.time()
         if win_player == -1:
-            return 0, save_time, True
+            return 0, save_time, True, kyotaku
         elif win_player == -2:
-            return 2, save_time, True
+            return 2, save_time, True, kyotaku
         draw_flag = False
 
         read_size = (1080, 1920, 3)
@@ -469,19 +472,23 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             # 牌配置待機
             win_class, win_box, lose_player = read_wintile(field_points, win_player, size, cap, cM, ton_player,
                                                            m, dst=dst, is_eval_draw=True, reduction=size[0]/read_size[0], save_movie=save_movie, effect=effect)
+            # トリガー検出へ戻る
             if win_class == -1:
+                kyotaku-=sum(isRiichi)
                 break
+            # 点数スキップ
             if win_class == -2:
                 if ton_player == win_player:
-                    return 0, save_time, True
+                    return 0, save_time, True, 0
                 else:
-                    return 1, save_time, True
+                    return 1, save_time, True, 0
             sub_time = time.time()
 
-            time.sleep(1)
+            # time.sleep(1)
             def_img = draw.draw_player_rect(field_points, win_player, size, reduction=reduction)
             def_img = draw.draw_kaze(field_points, ton_player, img=def_img, reduction=reduction)
             show_img(def_img, m, field_points, M=sM, reduction=reduction)
+            # 牌の表示を消す
             for i in range(500):
                 cv2.waitKey(1)
             ret, im = cap.read()
@@ -508,6 +515,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             result = mahjong_calculation.mahjong_auto(hand_classes, naki_classes, naki_boxes, dora_classes, dora_boxes, win_class, win_box, get_wind(
                 win_player, ton_player), round_wind=round_wind, honba=honba, is_tsumo=is_tsumo)
 
+            # 点数計算失敗
             draw_flag = True
             if result == -1:
                 music.play_music("./music/ビープ音1.mp3")
@@ -582,13 +590,15 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
                 else:
                     player_points[i] -= result.cost['additional']
     else:
-        player_points[win_player-1] += result.cost['main']
-        player_points[lose_player-1] -= result.cost['main']
+        player_points[win_player] += result.cost['main']
+        player_points[lose_player] -= result.cost['main']
+    # 1000点棒の加算
+    player_points[win_player] += kyotaku*1000
     print(player_points)
     if ton_player == win_player:
-        return 0, save_time, True
+        return 0, save_time, True, 0
     else:
-        return 1, save_time, True
+        return 1, save_time, True, 0
 
 
 def main():
@@ -703,7 +713,7 @@ def main():
     while (isContinue):
         while (ton_player < 4 and isContinue):
             # 局の開始
-            win_result, time_df, isContinue = mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
+            win_result, time_df, isContinue, kyotaku = mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
                                                            save_time=time_df, round_wind=round_wind, honba=honba, kyotaku=kyotaku, save_movie=save_movie, effect=effect)
 
             if win_result > 0:
