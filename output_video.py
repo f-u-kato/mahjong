@@ -16,7 +16,7 @@ import src.get_func.get_img as get
 import src.eval.calculation as mahjong_calculation
 import src.out_func.play_music as music
 import src.out_func.transform_video as trans
-import src.out_func.camera as camera
+# import src.out_func.camera as camera
 
 import concurrent.futures
 

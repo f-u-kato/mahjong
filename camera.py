@@ -17,6 +17,7 @@ import src.get_func.get_img as get
 import src.eval.calculation as mahjong_calculation
 import src.out_func.play_music as music
 import output_video as ov
+import src.out_func.transform_video as trans
 
 import concurrent.futures 
 
@@ -34,17 +35,20 @@ def print_hand_result(hand_result, agari):
     return result
 
 PLAY_BGM = glob.glob("./music/BGM/*")
+RIICHI_BGM = glob.glob("./music/riichi/*")
 TRIGGER_SE = [r'.\music\効果音1.mp3']
-LOAD_SE=r'.\music\loading.mp3'
-AGARI_SE=[r'.\music\和太鼓でドン.mp3',r'.\music\和太鼓でドドン.mp3']
-RYOUKYOKU_SE=r'.\music\しょげる.mp3'
-POINT_SE=[r'.\music\平手打ち1.mp3',r'.\music\剣で斬る2.mp3',r'.\music\剣で斬る1.mp3',r'.\music\剣で斬る3.mp3',r'.\music\剣で斬る4.mp3',r'.\music\剣で斬る6.mp3']
-AGARI_IMAGES = ['./material/points/mangan.png','./material/points/haneman.png','./material/points/baiman.png','./material/points/3bai.png','./material/points/yakuman.png']
-BACK_MOVIES=glob.glob("./material/back/*")
-AGARI_VIDEOS=['./material/満貫.mp4','./material/跳満.mp4','./material/倍満.mp4','./material/三倍満.mov']
-YAKUMAN_VIDEOS=['./material/役満1.mp4','./material/役満2.mov','./material/役満3.mp4']
-TRIGGER_VIDEOS='./material/trigger/1.mp4'
-REACH_SE=[]
+LOAD_SE = r'.\music\loading.mp3'
+AGARI_SE = [r'.\music\和太鼓でドン.mp3', r'.\music\和太鼓でドドン.mp3']
+RYOUKYOKU_SE = r'.\music\しょげる.mp3'
+POINT_SE = [r'.\music\平手打ち1.mp3', r'.\music\剣で斬る2.mp3', r'.\music\剣で斬る1.mp3', r'.\music\剣で斬る3.mp3', r'.\music\剣で斬る4.mp3', r'.\music\剣で斬る6.mp3']
+AGARI_IMAGES = ['./material/points/mangan.png', './material/points/haneman.png',
+                './material/points/baiman.png', './material/points/3bai.png', './material/points/yakuman.png']
+BACK_MOVIES = glob.glob("./material/back/*")
+AGARI_VIDEOS = ['./material/満貫.mp4', './material/跳満.mp4', './material/倍満.mp4', './material/三倍満.mov']
+YAKUMAN_VIDEOS = ['./material/役満1.mp4', './material/役満2.mov', './material/役満3.mp4']
+TRIGGER_VIDEOS = ['./material/trigger/0.mp4', './material/trigger/1.mp4']
+RIICHI_SE = ["./music/riichi.mp3"]
+RIICHI_VIDEO = "./material/riichi.mp4"
 
 
 
@@ -75,25 +79,19 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
     img = draw.draw_honba(field_points, ton_player, round_wind, honba, img=img, reduction=reduction)
     img = draw.draw_riichi(field_points, img=img, reduction=reduction)
     img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction)
-    sM = show_img(img, m, field_points, dst=dst, reduction=reduction)
+    sM = ov.show_img(img, m, field_points, dst=dst, reduction=reduction)
     cv2.waitKey(1)
     count = 0
     # 背景動画の読み込み
+    rand = random.randint(0, len(PLAY_BGM)-1)
     video = cv2.VideoCapture(BACK_MOVIES[rand])
     save_dir = "./save_riichi/0"
-
+    os.makedirs(save_dir,exist_ok=True)
     while (cap.isOpened()):
         # カメラ映像の取得
         ret, im = cap.read()
         im = trans.transform_camera(im, M=cM)
-        if save_movie is not None:
-            save_movie.write(cv2.resize(im, (1920, 1080)))
 
-        # トリガー検出
-        win_player = check_tile(field_points, im, size)
-        if win_player > -1:
-            print('check')
-            break
 
         # カメラ映像の表示
         im = draw.draw_rect2(field_points, size, im)
@@ -106,6 +104,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
                 riichi_image=get.get_riichi(field_points, i, im)
                 riichi_image=eval.padding_riichi(riichi_image)
                 cv2.imwrite(f"{save_dir}/riichi{i}_{count}.png", riichi_image)
+            print("save")
         count += 1
             
 
@@ -118,7 +117,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         img = draw.draw_honba(field_points, ton_player, round_wind, honba, img=img, reduction=reduction)
         img = draw.draw_riichi(field_points, img=img, reduction=reduction)
         img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction)
-        show_img(img, m, field_points, M=sM, reduction=reduction)
+        ov.show_img(img, m, field_points, M=sM, reduction=reduction)
         c = cv2.waitKey(1)
 
         # 流局
@@ -126,9 +125,12 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
             return
         elif c == ord('p'):
             save_dir = "./save_riichi/1"
+            print(save_dir)
+            os.makedirs(save_dir,exist_ok=True)
+            cv2.waitKey()
             
 
-    return win_player
+    return 
 
 
 def camera():
@@ -196,7 +198,7 @@ def camera():
     # 領域の投影
     img = np.zeros(size, np.uint8)
     cv2.rectangle(img, min_field[0], min_field[1], (255, 0, 0), -1)
-    _ = show_img(img, m, min_field, dst=dst)
+    _ = ov.show_img(img, m, min_field, dst=dst)
     cv2.waitKey(500)
     a = 50
     def_points = [[field_points[0][0]+a, field_points[0][1]+a], [field_points[1][0]-a, field_points[1][1]-a]]
@@ -223,7 +225,7 @@ def camera():
         cv2.rectangle(img, min_field[0], min_field[1], (255, 0, 0), -1)
         if effect is not None:
             effect.write(cv2.resize(img, (1920, 1080)))
-        _ = show_img(img, m, min_field, dst=dst)
+        _ = ov.show_img(img, m, min_field, dst=dst)
 
         if cv2.waitKey(500) & 0xFF == ord('q') or isBreak:
             break
@@ -240,6 +242,7 @@ def camera():
     kyotaku = 0
 
     # ゲーム開始
+    min_size=(540, 960, 3)
     reduction = size[0]/min_size[0]
     read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, dst=dst,
                                 player_points=player_points, reduction=reduction, save_movie=save_movie, effect=effect)
