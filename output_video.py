@@ -195,6 +195,8 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
                         music.play_se(RIICHI_SE[0])
                         speed *= 2
                         isRiichi[i] = True
+                        # 立直の場合，点数を減らす
+                        player_points[i] -= 1000
                     else:
                         isRiichi[i] = False
                 else:

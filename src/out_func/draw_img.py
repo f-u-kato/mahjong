@@ -157,8 +157,9 @@ def draw_riichi(field_points, size=(2160, 3840, 3), img=None, reduction=1):
 
 
 def draw_riichi2(field_points, img, size=(2160, 3840, 3), color=(0, 255, 0)):
-    pt1, pt2 = get.get_riichi(field_points, size=size, get_points=True)
-    cv2.rectangle(img, pt1, pt2, color, 3)
+    for i in range(4):
+        pt1, pt2 = get.get_riichi(field_points,i, get_points=True)
+        cv2.rectangle(img, pt1, pt2, color, 3)
     return img
 
 
