@@ -176,7 +176,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
 
         # カメラ映像の表示
         im = draw.draw_rect2(field_points, size, im)
-        # im = draw.draw_riichi2(field_points, im, size)
+        im = draw.draw_riichi2(field_points, im, size)
         cv2.imshow("Camera", cv2.resize(im, (1920, 1080)))
 
         # 立直判定
@@ -604,9 +604,9 @@ def main():
 
     # 動画保存用設定
     effect = None
-    effect = save_video(cap, "./save_movie/all_effect.mp4")
+    # effect = save_video(cap, "./save_movie/all_effect.mp4")
     save_movie = None
-    save_movie = save_video(cap, "./save_movie/all_movie.mp4")
+    # save_movie = save_video(cap, "./save_movie/all_movie.mp4")
 
     # モデルを読み込んでおく
     _ = eval.trigger_eval(np.zeros([100, 100, 3], dtype=np.uint8))
