@@ -142,6 +142,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
     r_count = [0, 0, 0, 0]
     r_max = 5
     r_video = None
+    r_frame = [0, 0, 0, 0]
     # 動画の再生速度
     speed = 1
     # トリガー動画の読み込み
@@ -188,10 +189,13 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
             for i, riichi_eval in enumerate(riichi_evals):
                 if riichi_eval == 1 and not isRiichi[i]:
                     r_count[i] += 1
+                    # 立直判定が一定数以上の場合，立直を宣言
                     if r_count[i] > r_max:
+                        # 初めての立直の場合，立直の音楽を再生
                         if r_video is None:
                             music.stop_music()
-                        r_video = cv2.VideoCapture(RIICHI_VIDEO)
+                            r_video = cv2.VideoCapture(RIICHI_VIDEO)
+                        # リーチ演出の再生
                         music.play_se(RIICHI_SE[0])
                         speed *= 2
                         isRiichi[i] = True
@@ -208,12 +212,9 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         # 立直演出
         for i in range(4):
             if isRiichi[i] and r_count[i] > r_max:
-                _, _ = r_video.read()
-                _, _ = r_video.read()
-                tmp_img = draw.back_place(r_video, img, field_points, i, reduction=reduction)
+                tmp_img = draw.back_place(r_video, img, field_points, i, time=r_frame[i], reduction=reduction)
+                r_frame[i] += 3
                 if tmp_img is None:
-                    isRiichi[i] = False
-                    r_video.release()
                     music.loop_music(PLAY_BGM[rand])
                     r_count[i] = -1
                 else:
@@ -369,12 +370,14 @@ def draw_movie(field_points, size, m, cap, win_player, cM, agari, dst, min_size=
             if c == ord('q'):
                 video.release()
                 return
+    # 役満の場合
     else:
         for i in range(len(YAKUMAN_VIDEOS)):
             video = YAKUMAN_VIDEOS[i]
             video = cv2.VideoCapture(video)
             if i == 2:
                 music.play_music("./music/和風ジングル.mp3")
+            # 動画フレーム
             count = 0
             while (cap.isOpened()):
                 ret, im = cap.read()
@@ -419,6 +422,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
     dice_rand = random.randint(20, 30)
     dice_number = [0, 0]
 
+    # サイコロ
     while (1):
         ret, im = cap.read()
         im = trans.transform_camera(im, M=cM)
@@ -432,32 +436,36 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
         if dice_count < 2*dice_rand and dice_count % 2 == 0:
             dice_img, dice_number = draw.draw_dice(field_points, size, img, reduction, dice_number)
             show_img(dice_img, m, field_points, dst=dst, reduction=reduction, M=sM)
-        dice_count += 1
+            dice_count += 1
 
         c = cv2.waitKey(1)
+        # 準備完了
         if c == ord('q'):
             break
+        # 終了
         elif c == ord('p'):
-            # 終了
-            return 0, save_time, False
+            return 0, save_time, False, kyotaku
 
     isRead = True
     isRiichi = [False, False, False, False]
     while (isRead):
         reduction = size[0]/min_size[0]
+        # トリガー検出
         win_player,isRiichi = read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, dst=dst,
                                   player_points=player_points, reduction=reduction, save_movie=save_movie, effect=effect)
-        
+        # リーチ分を加算
         kyotaku+=sum(isRiichi)
         st_time = time.time()
+        # 流局
         if win_player == -1:
             return 0, save_time, True, kyotaku
         elif win_player == -2:
             return 2, save_time, True, kyotaku
+        # 検出牌の表示用フラグ
         draw_flag = False
-
         read_size = (1080, 1920, 3)
         while (isRead):
+            # 検出牌の表示
             if draw_flag:
                 img = draw.draw_hand(field_points, hand_classes, hand_boxes, win_player, size, reduction=size[0]/read_size[0])
                 img = draw.draw_dora(field_points, dora_classes, dora_boxes, win_player, size, img, reduction=size[0]/read_size[0])
@@ -465,7 +473,8 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
                 img = draw.draw_wintile(field_points, win_class, win_box, win_player, size, img, reduction=size[0]/read_size[0])
             else:
                 img = None
-
+            
+            # 待機
             wait_no_wintile(field_points, win_player, size, dst, cap, cM, m, img,
                             reduction=size[0]/read_size[0], save_movie=save_movie, effect=effect)
 
@@ -475,6 +484,8 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             # トリガー検出へ戻る
             if win_class == -1:
                 kyotaku-=sum(isRiichi)
+                for i in range(4):
+                    player_points[i] += 1000*isRiichi[i]
                 break
             # 点数スキップ
             if win_class == -2:
@@ -501,6 +512,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             hai_img = get.get_naki(field_points, win_player, im, size)
             naki_classes, naki_scores, naki_boxes = eval.naki_eval(hai_img, 0.6)
 
+            # 検出結果の表示(ターミナル)
             print('agari', MAHJONG_CLASSES[win_class[0]])
             print('hand', hand_scores)
             for hand_class in hand_classes:
@@ -511,7 +523,10 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             print('naki', naki_scores)
             for naki_class in naki_classes:
                 print(MAHJONG_CLASSES[naki_class])
+                
+            # ツモ判定
             is_tsumo = win_player == lose_player
+            # 点数計算
             result = mahjong_calculation.mahjong_auto(hand_classes, naki_classes, naki_boxes, dora_classes, dora_boxes, win_class, win_box, get_wind(
                 win_player, ton_player), round_wind=round_wind, honba=honba, is_tsumo=is_tsumo)
 
@@ -545,6 +560,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             _ = show_img(img, m, field_points, dst=dst, reduction=reduction)
             cv2.waitKey(1)
 
+            # 役満などの表示
             if agari != -1:
                 img = draw.draw_agari(agari, field_points, win_player, size, reduction=reduction)
                 img = draw.draw_result(result, field_points, win_player, size, img, reduction=reduction)
@@ -688,7 +704,6 @@ def main():
         if len(mask) > 0:
             cv2.polylines(im, [mask], True, (0, 0, 255), 3)
             dst, isBreak = area.get_dst(field_points, mask, dst, max=size[0])
-        cv2.imshow("mask", cv2.resize(im, (1920, 1080)))
         img = np.zeros(size, np.uint8)
         cv2.rectangle(img, min_field[0], min_field[1], (255, 0, 0), -1)
         if effect is not None:
@@ -715,12 +730,14 @@ def main():
             # 局の開始
             win_result, time_df, isContinue, kyotaku = mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
                                                            save_time=time_df, round_wind=round_wind, honba=honba, kyotaku=kyotaku, save_movie=save_movie, effect=effect)
-
+            # 親の変更
             if win_result > 0:
                 ton_player += 1
             honba += 1
+            # 本場のリセット
             if win_result == 1:
                 honba = 0
+            # 飛んだ場合，終了
             if player_points[0] < 0 or player_points[1] < 0 or player_points[2] < 0 or player_points[3] < 0:
                 isContinue = False
                 break

@@ -181,7 +181,7 @@ def back_place(video, main_img, field_points, player, time=None, reduction=1, sk
         rotate = cv2.ROTATE_90_COUNTERCLOCKWISE
         frame = cv2.rotate(frame, rotate)
     if skelton:
-        mask = np.all(frame[:, :, :] == [0, 0, 0], axis=-1)
+        mask = np.all(frame[:, :, :] < [10, 10, 10], axis=-1)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
         frame[mask, 3] = 0
     out_img = place_img(main_img, resize_img(frame, draw_points), draw_points)
