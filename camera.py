@@ -76,8 +76,8 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
     # 情報と領域の投影
     img = draw.draw_rect_movie(field_points, trigger, size, img=None, reduction=reduction)
     img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction)
-    img = draw.draw_honba(field_points, ton_player, round_wind, honba, img=img, reduction=reduction)
     img = draw.draw_riichi(field_points, img=img, reduction=reduction)
+    img = draw.draw_honba(field_points, ton_player, round_wind, honba, img=img, reduction=reduction)
     img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction)
     sM = ov.show_img(img, m, field_points, dst=dst, reduction=reduction)
     cv2.waitKey(1)
@@ -93,16 +93,15 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         im = trans.transform_camera(im, M=cM)
 
 
-        # カメラ映像の表示
-        im = draw.draw_rect2(field_points, size, im)
-        im = draw.draw_riichi2(field_points, im, size)
+        # # カメラ映像の表示
+        # im = draw.draw_rect2(field_points, size, im)
+        # im = draw.draw_riichi2(field_points, im, size)
         cv2.imshow("Camera", cv2.resize(im, (1920, 1080)))
 
         # 立直保存
         if count % 10 == 0:
             for i in range(4):
                 riichi_image=get.get_riichi(field_points, i, im)
-                riichi_image=eval.padding_riichi(riichi_image)
                 cv2.imwrite(f"{save_dir}/riichi{i}_{count}.png", riichi_image)
             print("save")
         count += 1
@@ -114,8 +113,8 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         img = draw.draw_rect_movie(field_points, trigger, size, img=img, reduction=reduction)
         # 情報の投影
         img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction)
-        img = draw.draw_honba(field_points, ton_player, round_wind, honba, img=img, reduction=reduction)
         img = draw.draw_riichi(field_points, img=img, reduction=reduction)
+        img = draw.draw_honba(field_points, ton_player, round_wind, honba, img=img, reduction=reduction)
         img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction)
         ov.show_img(img, m, field_points, M=sM, reduction=reduction)
         c = cv2.waitKey(1)
@@ -128,6 +127,10 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
             print(save_dir)
             os.makedirs(save_dir,exist_ok=True)
             cv2.waitKey()
+        elif c == ord('c'):
+            rand = random.randint(0, len(PLAY_BGM)-1)
+            video = cv2.VideoCapture(BACK_MOVIES[rand])
+
             
 
     return 
@@ -149,10 +152,6 @@ def camera():
     # effect = save_video(cap, "./save_movie/all_effect.mp4")
     save_movie = None
     # save_movie = save_video(cap, "./save_movie/all_movie.mp4")
-
-    # モデルを読み込んでおく
-    _ = eval.trigger_eval(np.zeros([100, 100, 3], dtype=np.uint8))
-    _, _, _ = eval.win_eval(np.zeros([100, 100, 3], dtype=np.uint8), 0.9)
 
     # カメラ調節
     while (cap.isOpened()):

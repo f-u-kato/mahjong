@@ -148,9 +148,9 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
     trigger = cv2.VideoCapture(TRIGGER_VIDEOS[random.randint(0, len(TRIGGER_VIDEOS)-1)])
     # 情報と領域の投影
     img = draw.draw_rect_movie(field_points, trigger, size, img=None, reduction=reduction)
+    img = draw.draw_riichi(field_points, img=img, reduction=reduction)
     img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction)
     img = draw.draw_honba(field_points, ton_player, round_wind, honba, img=img, reduction=reduction)
-    img = draw.draw_riichi(field_points, img=img, reduction=reduction)
     img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction)
     sM = show_img(img, m, field_points, dst=dst, reduction=reduction)
     cv2.waitKey(1)
@@ -222,9 +222,9 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         # トリガー動画の投影
         img = draw.draw_rect_movie(field_points, trigger, size, img=img, reduction=reduction)
         # 情報の投影
+        img = draw.draw_riichi(field_points, img=img, reduction=reduction)
         img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction)
         img = draw.draw_honba(field_points, ton_player, round_wind, honba, img=img, reduction=reduction)
-        img = draw.draw_riichi(field_points, img=img, reduction=reduction)
         img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction)
         if effect is not None:
             effect.write(cv2.resize(img, (1920, 1080)))
