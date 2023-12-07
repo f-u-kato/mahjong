@@ -150,9 +150,12 @@ def draw_riichi(field_points, size=(2160, 3840, 3), img=None, reduction=1):
     hai_size = max(draw_points[1][0]-draw_points[0][0], draw_points[1][1]-draw_points[0][1])//15
     middle = [draw_points[0][0]+(draw_points[1][0]-draw_points[0][0])//2, draw_points[0][1]+(draw_points[1][1]-draw_points[0][1])//2]
     add = hai_size*2-hai_size//3
+
+    img[middle[1]-add:middle[1]+add, middle[0]-add:middle[0]+add] = (img[middle[1]-add:middle[1]+add, middle[0]-add:middle[0]+add].astype(np.float16) * 0.5).astype(np.uint8)
+
     cv2.rectangle(img, [middle[0]-add, middle[1]-add], [middle[0]+add, middle[1]+add], color, int(int(3//reduction)))
-    add = hai_size*2-hai_size//3*2
-    cv2.rectangle(img, [middle[0]-add, middle[1]-add], [middle[0]+add, middle[1]+add], color, int(int(3//reduction)))
+    next_add = hai_size*2-hai_size//3*2
+    cv2.rectangle(img, [middle[0]-next_add, middle[1]-next_add], [middle[0]+next_add, middle[1]+next_add], color, int(int(3//reduction)))
     return img
 
 
@@ -181,7 +184,7 @@ def back_place(video, main_img, field_points, player, time=None, reduction=1, sk
         rotate = cv2.ROTATE_90_COUNTERCLOCKWISE
         frame = cv2.rotate(frame, rotate)
     if skelton:
-        mask = np.all(frame[:, :, :] < [10, 10, 10], axis=-1)
+        mask = np.all(frame[:, :, :] == [0, 0, 0], axis=-1)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
         frame[mask, 3] = 0
     out_img = place_img(main_img, resize_img(frame, draw_points), draw_points)

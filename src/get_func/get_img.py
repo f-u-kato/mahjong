@@ -35,7 +35,7 @@ def get_riichi(field_points, player, img=None, get_points=False):
     hai_size = max(field_points[1][0]-field_points[0][0], field_points[1][1]-field_points[0][1])//15
     middle = [field_points[0][0]+(field_points[1][0]-field_points[0][0])//2, field_points[0][1]+(field_points[1][1]-field_points[0][1])//2]
     add = hai_size*2-hai_size//3
-    small_add = hai_size*2-hai_size//3*2
+    small_add = hai_size*2-hai_size//5*4
     if player == 0:
         pt1 = [middle[0]+small_add, middle[1]-add]
         pt2 = [middle[0]+add, middle[1]+add]
@@ -61,19 +61,25 @@ def get_trigger(field_points, player, img=None, size=(2160, 3840, 3), color=(0, 
     if player == 0:
         pt1 = [field_points[0][0]+hai_point[0]-hai_size//4, field_points[0][1]+hai_point[1]+hai_size//8]
         pt2 = [x + hai_size for x in pt1]
+        rotate = cv2.ROTATE_180
     elif player == 2:
         pt1 = [field_points[1][0]-hai_point[0]+hai_size//6, field_points[1][1]-hai_point[1]-hai_size//4]
         pt2 = [x - hai_size for x in pt1]
+        rotate = None
     elif player == 3:
         pt1 = [field_points[1][0]-hai_size-hai_size//4, field_points[0][1]+hai_point[0]-hai_size//4]
         pt2 = [pt1[0]-hai_size, pt1[1]+hai_size]
+        rotate = cv2.ROTATE_90_CLOCKWISE
     else:
         pt1 = [field_points[0][0]+hai_point[1]+hai_size//6, field_points[1][1]-hai_point[0]+hai_size//8]
         pt2 = [pt1[0]+hai_size, pt1[1]-hai_size]
+        rotate = cv2.ROTATE_90_COUNTERCLOCKWISE
     pt1, pt2 = min_max_xy(pt1, pt2)
     if get_points:
         return pt1, pt2
     im = img[pt1[1]:pt2[1], pt1[0]:pt2[0], :]
+    if rotate is not None:
+        im = cv2.rotate(im, rotate)
 
     return im
 
