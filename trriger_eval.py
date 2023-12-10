@@ -20,7 +20,7 @@ def resnet_eval(img):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model=model.to(device)
     image_size = 224
-    mean = (0.485, 0.456, 0.406)
+    mean = (0., 0.456, 0.406)
     std = (0.229, 0.224, 0.225)
     transform=transforms.Compose([
             transforms.Resize(image_size),
@@ -58,7 +58,7 @@ def resnet_train(name='riichi'):
     model.fc = torch.nn.Linear(model.fc.in_features, 1)
     save_path=f'./weights/{name}_resnet18'
     os.makedirs(save_path,exist_ok=True)
-    image_size = 224
+    image_size = (224,224)
     mean = (0.485, 0.456, 0.406)
     std = (0.229, 0.224, 0.225)
     os.makedirs(save_path,exist_ok=True)
@@ -69,21 +69,21 @@ def resnet_train(name='riichi'):
             transforms.Resize(image_size),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
-            # transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0),
+            transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0),
             transforms.ToTensor(),
-            # transforms.Normalize(mean, std),
+            transforms.Normalize(mean, std),
         ]),
         'val': transforms.Compose([
             transforms.Resize(image_size),
             transforms.ToTensor(),
-            # transforms.Normalize(mean, std)
+            transforms.Normalize(mean, std)
         ])
     }
     train_dataset = torchvision.datasets.ImageFolder(root=train_image_dir, transform=data_transform['train'])
     val_dataset = torchvision.datasets.ImageFolder(root=val_image_dir, transform=data_transform['val'])
     batch_size = 32
     train_dataLoader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=False
+        train_dataset, batch_size=batch_size, shuffle=True
     )
     val_dataLoader = torch.utils.data.DataLoader(
         val_dataset, batch_size=batch_size, shuffle=False
@@ -199,6 +199,7 @@ def trigger_test():
 def train_val_div(source_folder,train_ratio=0.8):
     class_folders = os.listdir(source_folder)
     if 'train' in class_folders:
+        print('Already divided')
         return
     for folder in ['train', 'val']:
         for class_folder in class_folders:
@@ -217,7 +218,7 @@ def train_val_div(source_folder,train_ratio=0.8):
             shutil.copy(file, f'./{source_folder}/val/{class_folder}')
 
 if __name__ == '__main__':
-    # train_val_div('./save_riichi')
+    train_val_div('./save_riichi')
     resnet_train('save_riichi')
     # resnet_train('trigger')
     # trigger_test()
