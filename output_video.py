@@ -184,26 +184,28 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         if sum(isRiichi) < len(isRiichi):
             riichi_images = []
             for i in range(4):
+                cv2.imshow(str(i),get.get_riichi(field_points, i, im))
                 riichi_images.append(get.get_riichi(field_points, i, im))
             riichi_evals = eval.multi_riichi_eval(riichi_images)
             for i, riichi_eval in enumerate(riichi_evals):
                 if riichi_eval == 1 and not isRiichi[i]:
                     r_count[i] += 1
+                    print(i,r_count[i])
                     # 立直判定が一定数以上の場合，立直を宣言
                     if r_count[i] > r_max:
                         # 初めての立直の場合，立直の音楽を再生
                         if r_video is None:
                             music.stop_music()
                             r_video = cv2.VideoCapture(RIICHI_VIDEO)
+                            speed *= 2
                         # リーチ演出の再生
                         music.play_se(RIICHI_SE[0])
-                        speed *= 2
                         isRiichi[i] = True
                         # 立直の場合，点数を減らす
                         player_points[i] -= 1000
                     else:
                         isRiichi[i] = False
-                else:
+                elif not isRiichi[i]:
                     r_count[i] = 0
 
         # 背景動画の投影
@@ -212,11 +214,13 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         # 立直演出
         for i in range(4):
             if isRiichi[i] and r_count[i] > r_max:
-                tmp_img = draw.back_place(r_video, img, field_points, i, time=r_frame[i], reduction=reduction)
+                tmp_img = draw.back_place(r_video, img, field_points, i, time=r_frame[i], reduction=reduction,skelton=True)
                 r_frame[i] += 3
                 if tmp_img is None:
-                    music.loop_music(PLAY_BGM[rand])
+                    if not (-1 in r_count):
+                        music.loop_music(RIICHI_BGM[rand])
                     r_count[i] = -1
+                    print(i)
                 else:
                     img = tmp_img
 
@@ -278,7 +282,7 @@ def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is
     sM = show_img(def_img, m, field_points, dst=dst, reduction=reduction)
     img = def_img.copy()
     isFirst = True
-    lose_player = 0
+    lose_player = -1
 
     while (cap.isOpened()):
         # 牌の表示を消す
@@ -436,8 +440,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
         if dice_count < 2*dice_rand and dice_count % 2 == 0:
             dice_img, dice_number = draw.draw_dice(field_points, size, img, reduction, dice_number)
             show_img(dice_img, m, field_points, dst=dst, reduction=reduction, M=sM)
-            dice_count += 1
-
+        dice_count += 1
         c = cv2.waitKey(1)
         # 準備完了
         if c == ord('q'):
@@ -704,6 +707,7 @@ def main():
         if len(mask) > 0:
             cv2.polylines(im, [mask], True, (0, 0, 255), 3)
             dst, isBreak = area.get_dst(field_points, mask, dst, max=size[0])
+            cv2.imshow("mask",cv2.resize(im,[1920,1080]))
         img = np.zeros(size, np.uint8)
         cv2.rectangle(img, min_field[0], min_field[1], (255, 0, 0), -1)
         if effect is not None:

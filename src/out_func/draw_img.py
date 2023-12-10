@@ -184,7 +184,7 @@ def back_place(video, main_img, field_points, player, time=None, reduction=1, sk
         rotate = cv2.ROTATE_90_COUNTERCLOCKWISE
         frame = cv2.rotate(frame, rotate)
     if skelton:
-        mask = np.all(frame[:, :, :] == [0, 0, 0], axis=-1)
+        mask = np.all(frame[:, :, :] < [50, 50, 50], axis=-1)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
         frame[mask, 3] = 0
     out_img = place_img(main_img, resize_img(frame, draw_points), draw_points)
@@ -402,7 +402,7 @@ def draw_player_rect(field_points, player, size=(2160, 3840, 3), img=None, first
         img = first_img
     # あがりはい
     for i in range(4):
-        [pt1, pt2] = draw_player_wintile(field_points, i+1, size, img, first, color, return_points, reduction)
+        [pt1, pt2] = draw_player_wintile(field_points, i, size, img, first, color, return_points, reduction)
         cv2.rectangle(img, pt1, pt2, color, int(3//reduction))
         if i == player:
             points.append([pt1, pt2])

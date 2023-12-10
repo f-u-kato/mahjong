@@ -72,19 +72,6 @@ TRAINED_MODEL = r"weights\hand_naki_dora_win\yolact_mahjong_create_47_30000.pth"
 ALL_TRAINED_MODEL = r"weights\hand_naki_dora_win\yolact_mahjong_create_31_20000.pth"
 # TRAINED_MODEL=r"weights\hand_naki_dora_win\yolact_mahjong_create_15_10000.pth"
 
-
-def padding_riichi(img):
-    color = (163, 213, 106)
-    h, w, _ = img.shape
-    if h > w:
-        h_pad = 0
-        w_pad = h - w
-    else:
-        h_pad = w - h
-        w_pad = 0
-    return cv2.copyMakeBorder(img, 0, h_pad, 0, w_pad, cv2.BORDER_CONSTANT, value=color)
-
-
 image_size = (224,224)
 mean = (0.485, 0.456, 0.406)
 std = (0.229, 0.224, 0.225)
@@ -120,7 +107,7 @@ def trigger_eval(img):
 
 def multi_riichi_eval(imgs):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    imgs = [cv2pil(padding_riichi(img)) for img in imgs]
+    imgs = [cv2pil(img) for img in imgs]
     model = torch.load('./weights/save_riichi/model_20.pth')
     model = model.to(device)
     inputs = torch.stack([transform(img).to(device) for img in imgs])

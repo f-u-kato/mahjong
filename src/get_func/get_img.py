@@ -36,22 +36,29 @@ def get_riichi(field_points, player, img=None, get_points=False):
     middle = [field_points[0][0]+(field_points[1][0]-field_points[0][0])//2, field_points[0][1]+(field_points[1][1]-field_points[0][1])//2]
     add = hai_size*2-hai_size//3
     small_add = hai_size*2-hai_size//5*4
-    if player == 0:
-        pt1 = [middle[0]+small_add, middle[1]-add]
-        pt2 = [middle[0]+add, middle[1]+add]
-    elif player == 1:
-        pt1 = [middle[0]-add, middle[1]+small_add]
-        pt2 = [middle[0]+add, middle[1]+add]
+    sub=hai_size//8
+    if player == 1:
+        pt1 = [middle[0]-add+sub, middle[1]-add]
+        pt2 = [middle[0]-small_add+sub, middle[1]+add]
+        rotate=cv2.ROTATE_90_COUNTERCLOCKWISE
     elif player == 2:
-        pt1 = [middle[0]-add, middle[1]-add]
-        pt2 = [middle[0]-small_add, middle[1]+add]
+        pt1 = [middle[0]-add, middle[1]+small_add-sub]
+        pt2 = [middle[0]+add, middle[1]+add-sub]
+        rotate=None
     elif player == 3:
+        pt1 = [middle[0]+small_add-sub, middle[1]-add]
+        pt2 = [middle[0]+add-sub, middle[1]+add]
+        rotate=cv2.ROTATE_90_CLOCKWISE
+    elif player == 0:
         pt1 = [middle[0]-add, middle[1]-add]
         pt2 = [middle[0]+add, middle[1]-small_add]
+        rotate=cv2.ROTATE_180
     pt1,pt2=min_max_xy(pt1,pt2)
     if get_points:
         return pt1, pt2
     im = img[pt1[1]:pt2[1], pt1[0]:pt2[0], :]
+    if rotate is not None:
+        im = cv2.rotate(im, rotate)
     return im
 
 

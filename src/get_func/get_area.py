@@ -20,7 +20,6 @@ def get_rect(path,source):
     diff = cv2.absdiff(image1, image2)
     threshold = 40
     _, hsv_mask = cv2.threshold(diff, threshold, 255, cv2.THRESH_BINARY)
-    cv2.imshow("mask_old",cv2.resize(hsv_mask,[1920,1080]))
     kernel = np.ones((3, 3), np.uint8)
     hsv_mask = cv2.morphologyEx(
         hsv_mask, cv2.MORPH_OPEN, kernel, iterations=1)  # クロージング
@@ -77,11 +76,11 @@ def get_dst(field_points,mask,dst,max,a=40):
     w_sum+=abs(mask[1][0]-def_points[1][0])
     # # 縦
     h_sum=abs(mask[0][1]-def_points[0][1])
-    h_sum+=abs(mask[2][1]-def_points[0][1])
+    h_sum+=abs(mask[2][1]-def_points[1][1])
     h_sum+=abs(mask[3][1]-def_points[1][1])
-    h_sum+=abs(mask[1][1]-def_points[1][1])
+    h_sum+=abs(mask[1][1]-def_points[0][1])
     # 設定終了
-    if w_sum<25 and h_sum<25:
+    if w_sum<25 and h_sum<35:
         return dst,True
     
     if mask[0][0]>def_points[0][0]:
