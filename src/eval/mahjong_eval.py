@@ -85,7 +85,7 @@ def padding_riichi(img):
     return cv2.copyMakeBorder(img, 0, h_pad, 0, w_pad, cv2.BORDER_CONSTANT, value=color)
 
 
-image_size = 224
+image_size = (224,224)
 mean = (0.485, 0.456, 0.406)
 std = (0.229, 0.224, 0.225)
 transform = transforms.Compose([
@@ -121,7 +121,7 @@ def trigger_eval(img):
 def multi_riichi_eval(imgs):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     imgs = [cv2pil(padding_riichi(img)) for img in imgs]
-    model = torch.load('./weights/riichi/model_20.pth')
+    model = torch.load('./weights/save_riichi/model_20.pth')
     model = model.to(device)
     inputs = torch.stack([transform(img).to(device) for img in imgs])
     outputs = model(inputs)
