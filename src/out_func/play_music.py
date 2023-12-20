@@ -17,6 +17,10 @@ def play_music(path):
 
     return
 
+def play_se(path):
+    pygame.mixer.Sound(path).play()
+    return
+
 def stop_music():
     pygame.mixer.music.stop()
     return
@@ -26,5 +30,9 @@ def fade_music(ms=1000):
     return
 
 def pause_music():
+    pygame.mixer.music.pause()
+    return
+
+def unpause_music():
     pygame.mixer.music.unpause()
     return
