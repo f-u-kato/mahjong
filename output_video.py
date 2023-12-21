@@ -1,5 +1,6 @@
 import cv2
 from screeninfo import get_monitors
+import tkinter as tk
 
 import numpy as np
 import random
@@ -134,6 +135,31 @@ def save_video(camera, name):
     video = cv2.VideoWriter(name, fourcc, fps, (w, h))  # 動画の仕様（ファイル名、fourcc, FPS, サイズ）
     return video
 
+def create_button(window, text, command):
+    button = tk.Button(window, text=text, command=command)
+    button.pack(side=tk.LEFT, padx=10, pady=10)
+
+
+def button_click(window,is_sanma,is_tonpu):
+    window.is_sanma = is_sanma
+    window.is_tonpu = is_tonpu
+    window.destroy()
+
+def setting_window():
+    window = tk.Tk()
+    window.title("ボタンウィンドウ")
+    window.geometry("500x500")
+    window.is_sanma = False
+    window.is_tonpu = False
+
+    create_button(window, "四人東", lambda: button_click(window,False,True))
+    create_button(window, "四人南", lambda: button_click(window,False,False))
+    create_button(window, "三人東", lambda: button_click(window,True,True))
+    create_button(window, "三人南", lambda: button_click(window,True,False))
+
+    window.mainloop()
+    
+    return window.is_sanma, window.is_tonpu
 
 def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, dst, player_points, reduction=1, save_movie=None, effect=None):
     # 立直の判定
@@ -407,7 +433,7 @@ def draw_movie(field_points, size, m, cap, win_player, cM, agari, dst, min_size=
     return
 
 
-def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points, min_size=(540, 960, 3), save_time=None, round_wind=0, honba=0, kyotaku=0, save_movie=None, effect=None):
+def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points, min_size=(540, 960, 3), save_time=None, round_wind=0, honba=0, kyotaku=0, save_movie=None, effect=None, is_sanma=False, is_tonpu=False):
     # 表示倍率
     reduction = size[0]/min_size[0]
 
@@ -727,6 +753,9 @@ def main():
     ton_player = 0
     honba = 0
     kyotaku = 0
+    
+    # ゲーム開始前の設定
+    is_sanma, is_tonpu = setting_window()
 
     # ゲーム開始
     while (isContinue):

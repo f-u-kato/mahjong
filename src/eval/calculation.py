@@ -362,8 +362,6 @@ def mahjong_win(win_class,box):
 def mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,win_class,win_box,player_wind,round_wind=0,honba=0,is_tsumo=False,is_sanma=False):
     player_wind=WIND_CLASSES[player_wind]
     round_wind=WIND_CLASSES[round_wind]
-
-    
     melds,naki_aka,add_tiles=mahjong_naki(naki_classes,naki_boxes)
     dora_indicators,is_riichi,is_ippatsu,nuki_dora=mahjong_dora(dora_classes,dora_boxes)
     win_tile,win_aka,is_rinshan=mahjong_win(win_class[0],win_box[0])
