@@ -1,6 +1,8 @@
 import cv2
 from screeninfo import get_monitors
 import tkinter as tk
+import customtkinter as ctk
+from CTkSpinbox import *
 
 import numpy as np
 import random
@@ -17,6 +19,7 @@ import src.get_func.get_img as get
 import src.eval.calculation as mahjong_calculation
 import src.out_func.play_music as music
 import src.out_func.transform_video as trans
+import src.out_func.create_window as cw
 # import src.out_func.camera as camera
 
 import concurrent.futures
@@ -135,31 +138,44 @@ def save_video(camera, name):
     video = cv2.VideoWriter(name, fourcc, fps, (w, h))  # 動画の仕様（ファイル名、fourcc, FPS, サイズ）
     return video
 
-def create_button(window, text, command):
-    button = tk.Button(window, text=text, command=command)
-    button.pack(side=tk.LEFT, padx=10, pady=10)
-
-
-def button_click(window,is_sanma,is_tonpu):
-    window.is_sanma = is_sanma
-    window.is_tonpu = is_tonpu
-    window.destroy()
+def toggle_spinbox(spinbox,is_check):
+    if is_check.get() == 1:  # チェックボックスがチェックされていない場合
+        spinbox.configure(text_color='white')  # spinboxを無効にする
+    else:  # チェックボックスがチェックされている場合
+        spinbox.configure(text_color='black')  # spinboxを有効にする
 
 def setting_window():
-    window = tk.Tk()
-    window.title("ボタンウィンドウ")
-    window.geometry("500x500")
-    window.is_sanma = False
-    window.is_tonpu = False
+    # ウィンドウを作成
+    app = ctk.CTk()
+    app.geometry("800x500")
+    app.title('麻雀ゲームの設定')
 
-    create_button(window, "四人東", lambda: button_click(window,False,True))
-    create_button(window, "四人南", lambda: button_click(window,False,False))
-    create_button(window, "三人東", lambda: button_click(window,True,True))
-    create_button(window, "三人南", lambda: button_click(window,True,False))
+    # ラジオボタン
+    mode_type = tk.IntVar(value=0)
+    radio_frame = ctk.CTkFrame(app)
+    radio_frame.pack(side="top", anchor="n", pady=20) 
+    ctk.CTkRadioButton(radio_frame, text="四人東", variable=mode_type, value=0).pack(side="left", padx=10)
+    ctk.CTkRadioButton(radio_frame, text="四人南", variable=mode_type, value=1).pack(side="left", padx=10)
+    ctk.CTkRadioButton(radio_frame, text="三人東", variable=mode_type, value=2).pack(side="left", padx=10)
+    ctk.CTkRadioButton(radio_frame, text="三人南", variable=mode_type, value=3).pack(side="left", padx=10)
 
-    window.mainloop()
-    
-    return window.is_sanma, window.is_tonpu
+    # スコア設定
+    score_frame = ctk.CTkFrame(app)
+    score_frame.pack(side="top", anchor="n",pady=20)
+    ctk.CTkLabel(score_frame, text="終了条件(基準点数)").pack(side="left", padx=10)
+    end_score = CTkSpinbox(score_frame,start_value=30000, min_value=0, max_value=100000, scroll_value=100,step_value=100, width=200)
+    end_score.pack(side="left")
+    is_check=tk.IntVar(value=1)
+    ctk.CTkCheckBox(score_frame, text="設定しない", variable=is_check, onvalue=0, offvalue=1, command=lambda:toggle_spinbox(end_score,is_check)).pack(side="left", padx=10)
+
+    # スタートボタンの作成と配置
+    ctk.CTkButton(app, text="スタート", command=app.destroy).pack(side="right", anchor="n", padx=80, pady=50) 
+
+    app.mainloop() 
+
+    is_sanma = mode_type.get() > 1
+    is_tonpu = mode_type.get() % 2 == 0
+    return is_sanma, is_tonpu, end_score.get()*is_check.get()
 
 def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, dst, player_points, reduction=1, save_movie=None, effect=None):
     # 立直の判定
@@ -755,14 +771,17 @@ def main():
     kyotaku = 0
     
     # ゲーム開始前の設定
-    is_sanma, is_tonpu = setting_window()
+    is_sanma, is_tonpu, end_point = setting_window()
+    is_over = False
+    if is_sanma:
+        player_points = [35000, 35000, 35000]
 
     # ゲーム開始
     while (isContinue):
         while (ton_player < 4 and isContinue):
             # 局の開始
             win_result, time_df, isContinue, kyotaku = mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
-                                                           save_time=time_df, round_wind=round_wind, honba=honba, kyotaku=kyotaku, save_movie=save_movie, effect=effect)
+                                                           save_time=time_df, round_wind=round_wind, honba=honba, kyotaku=kyotaku, save_movie=save_movie, effect=effect, is_sanma=is_sanma)
             # 親の変更
             if win_result > 0:
                 ton_player += 1
@@ -774,6 +793,14 @@ def main():
             if player_points[0] < 0 or player_points[1] < 0 or player_points[2] < 0 or player_points[3] < 0:
                 isContinue = False
                 break
+            if is_over and max(player_points) >= end_point:
+                isContinue = False
+                break
+        if (1-is_tonpu)==round_wind:
+            is_over = True
+            if max(player_points) >= end_point:
+                isContinue = False
+
         ton_player = 0
         round_wind += 1
 
