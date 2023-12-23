@@ -384,6 +384,54 @@ def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is
             return -2, -2, 0
     return win_class, win_box, lose_player
 
+def ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, reduction=1, save_movie=None, effect=None, is_sanma=False):
+    music.stop_music()
+    img = draw.draw_kaze(field_points, ton_player, reduction=reduction, is_sanma=is_sanma)
+    img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
+    for i in range(4-is_sanma):
+        [pt1, pt2] = draw.draw_player_hand(field_points, i, size, reduction=reduction)
+        cv2.rectangle(img, pt1, pt2, (0, 255, 0), int(3//reduction))
+
+    # 投影変換の計算
+    sM = show_img(img, m, field_points, dst=dst, reduction=reduction)
+
+    # 流局の判定
+    is_tenpai = [False, False, False, False]
+    t_count = [0, 0, 0, 0]
+
+    while (cap.isOpened()):
+        # カメラ映像の取得
+        ret, im = cap.read()
+        im = trans.transform_camera(im, M=cM)
+        # カメラ映像の表示
+        cv2.imshow("Camera", cv2.resize(im, (1920, 1080)))
+
+        # 流局の判定
+        images=[]
+        for i in range(4-is_sanma):
+            hai_img = get.get_hand(field_points, i, im, size)
+            images.append(hai_img)
+        ryukyoku_eval = eval.ryukyoku_eval(images)
+        for i, ryukyoku in enumerate(ryukyoku_eval):
+            if abs(t_count[i]) < 5:
+                if ryukyoku == 1:
+                    if t_count<0:
+                        t_count[i]=0
+                    t_count[i] += 1
+                    if t_count[i] > 5:
+                        is_tenpai[i] = True
+                elif ryukyoku==2:
+                    if t_count>0:
+                        t_count[i]=0
+                    t_count[i]-=1
+                    if t_count[i] < -5:
+                        is_tenpai[i] = False
+                else:
+                    t_count[i] = 0
+                
+            
+
+
 
 def draw_movie(field_points, size, m, cap, win_player, cM, agari, dst, min_size=(540, 960, 3), save_movie=None, effect=None):
 

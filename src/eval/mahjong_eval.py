@@ -82,6 +82,19 @@ transform = transforms.Compose([
     transforms.Normalize(mean, std)
 ])
 
+def mulri_ryukyoku_eval(imgs):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    imgs = [cv2pil(img) for img in imgs]
+    model = torch.load('./weights/save_ryukyoku/model_20.pth')
+    model = model.to(device)
+    inputs = torch.stack([transform(img).to(device) for img in imgs])
+    outputs = model(inputs)
+    class_ids = outputs.argmax(dim=1)
+    # outputの確率が0.5以下の場合はclass_idを0
+    for i, output in enumerate(outputs):
+        if output[class_ids[i]] < 0.5:
+            class_ids[i] = 0
+    return class_ids
 
 def multi_trigger_eval(imgs):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

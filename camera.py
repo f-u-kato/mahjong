@@ -290,7 +290,6 @@ def get_hand(field_points, size, cap, cM, ton_player, m, dst,reduction=1):
         count += 1
 
         c = cv2.waitKey(1)
-        # トリガー検出ミスの場合
         if c == ord('q'):
             if mode==2:
                 break
