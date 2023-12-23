@@ -280,12 +280,10 @@ def mahjong_dora(classes, boxes):
                 dora_indicators.append(TilesConverter.string_to_136_array(honors=MAHJONG_CLASSES_NUMBER[mc])[0])
             else:
                 nuki_dora+=1
-        if box[3]-box[1]<box[2]-box[0]:
-            is_riichi=True
         if box[3]-box[1]>box[2]-box[0]:
             is_ippatu=False
     is_ippatu=is_riichi and is_ippatu
-    return dora_indicators,is_riichi,is_ippatu,nuki_dora
+    return dora_indicators,is_ippatu,nuki_dora
 
 def mahjong_hand(classes,win,melds_tiles):
     class_list = []
@@ -359,11 +357,11 @@ def mahjong_win(win_class,box):
     return win_tile,has_aka_dora,is_rinshan
 
 
-def mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,win_class,win_box,player_wind,round_wind=0,honba=0,is_tsumo=False,is_sanma=False):
+def mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,win_class,win_box,player_wind,round_wind=0,honba=0,is_tsumo=False,is_sanma=False, is_riichi=False):
     player_wind=WIND_CLASSES[player_wind]
     round_wind=WIND_CLASSES[round_wind]
     melds,naki_aka,add_tiles=mahjong_naki(naki_classes,naki_boxes)
-    dora_indicators,is_riichi,is_ippatsu,nuki_dora=mahjong_dora(dora_classes,dora_boxes)
+    dora_indicators,is_ippatsu,nuki_dora=mahjong_dora(dora_classes,dora_boxes)
     win_tile,win_aka,is_rinshan=mahjong_win(win_class[0],win_box[0])
     tiles,hand_aka=mahjong_hand(hand_classes,win_class[0],add_tiles)
     has_aka_dora=hand_aka | naki_aka | win_aka
@@ -389,7 +387,7 @@ def mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,wi
             result.cost['additional']+=100*honba
             result.cost["main"]+=100*honba
         else:
-            result.cost['main']+=300*honba
+            result.cost['main']+=(300-100*is_sanma)*honba
     except Exception as e:
         print(e)
         return -1

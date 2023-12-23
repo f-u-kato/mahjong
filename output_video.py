@@ -397,6 +397,7 @@ def ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, red
 
     # 流局の判定
     is_tenpai = [False, False, False, False]
+    is_check = [False, False, False, False]
     t_count = [0, 0, 0, 0]
 
     while (cap.isOpened()):
@@ -413,25 +414,47 @@ def ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, red
             images.append(hai_img)
         ryukyoku_eval = eval.ryukyoku_eval(images)
         for i, ryukyoku in enumerate(ryukyoku_eval):
-            if abs(t_count[i]) < 5:
+            if not is_check[i]:
                 if ryukyoku == 1:
                     if t_count<0:
                         t_count[i]=0
                     t_count[i] += 1
                     if t_count[i] > 5:
                         is_tenpai[i] = True
+                        is_check[i] = True
+                        [pt1, pt2] = draw.draw_player_hand(field_points, i, size, reduction=reduction)
+                        cv2.rectangle(img, pt1, pt2, (255, 0, 0), int(3//reduction))
+                        show_img(img, m, field_points, dst=dst, reduction=reduction, M=sM)
                 elif ryukyoku==2:
                     if t_count>0:
                         t_count[i]=0
                     t_count[i]-=1
                     if t_count[i] < -5:
                         is_tenpai[i] = False
+                        is_check[i] = True
+                        [pt1, pt2] = draw.draw_player_hand(field_points, i, size, reduction=reduction)
+                        cv2.rectangle(img, pt1, pt2, (255, 255, 255), int(3//reduction))
+                        show_img(img, m, field_points, dst=dst, reduction=reduction, M=sM)
                 else:
                     t_count[i] = 0
+        # 間違えていた場合，戻る
+        c = cv2.waitKey(1)
+        if c == ord('q'):
+            return player_points, -1
                 
+        # すべて確認した場合，終了
+        if sum(is_check) == 4-is_sanma:
+            break
+    # ノーテン罰符の支払い
+    if sum(is_tenpai) != 4-is_sanma and sum(is_tenpai) != 0:
+        not_tenpai_point=(2000+1000*is_sanma)
+        for i in range(4-is_sanma):
+            if is_tenpai[i]:
+                player_points[i] += not_tenpai_point // sum(is_tenpai)
+            else:
+                player_points[i] -= not_tenpai_point // (4-is_sanma-sum(is_tenpai))
+    return player_points, not is_tenpai[ton_player]
             
-
-
 
 def draw_movie(field_points, size, m, cap, win_player, cM, agari, dst, min_size=(540, 960, 3), save_movie=None, effect=None):
 
@@ -549,10 +572,17 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
         kyotaku+=sum(isRiichi)
         st_time = time.time()
         # 流局
-        if win_player == -1:
-            return 0, save_time, True, kyotaku
-        elif win_player == -2:
-            return 2, save_time, True, kyotaku
+        if win_player < 0:
+            player_points, is_change = ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, reduction=reduction, save_movie=save_movie, effect=effect, is_sanma=is_sanma)
+            # トリガー検出へ戻る
+            if is_change == -1:
+                kyotaku-=sum(isRiichi)
+                for i in range(4-is_sanma):
+                    player_points[i] += 1000*isRiichi[i]
+                continue
+            # 流局
+            return 2*is_change, save_time, True, kyotaku
+
         # 検出牌の表示用フラグ
         draw_flag = False
         read_size = (1080, 1920, 3)
@@ -587,7 +617,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
                     return 1, save_time, True, 0
             sub_time = time.time()
 
-            # time.sleep(1)
+            time.sleep(1)
             def_img = draw.draw_player_rect(field_points, win_player, size, reduction=reduction)
             def_img = draw.draw_kaze(field_points, ton_player, img=def_img, reduction=reduction)
             show_img(def_img, m, field_points, M=sM, reduction=reduction)
@@ -620,7 +650,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             is_tsumo = win_player == lose_player
             # 点数計算
             result = mahjong_calculation.mahjong_auto(hand_classes, naki_classes, naki_boxes, dora_classes, dora_boxes, win_class, win_box, get_wind(
-                win_player, ton_player), round_wind=round_wind, honba=honba, is_tsumo=is_tsumo, is_sanma=is_sanma, is_tonpu=is_tonpu)
+                win_player, ton_player), round_wind=round_wind, honba=honba, is_tsumo=is_tsumo, is_sanma=is_sanma, is_riichi=isRiichi[win_player])
 
             # 点数計算失敗
             draw_flag = True
