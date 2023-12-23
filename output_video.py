@@ -225,7 +225,6 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         if sum(isRiichi) < len(isRiichi):
             riichi_images = []
             for i in range(4-is_sanma):
-                cv2.imshow(str(i),get.get_riichi(field_points, i, im))
                 riichi_images.append(get.get_riichi(field_points, i, im))
             riichi_evals = eval.multi_riichi_eval(riichi_images)
             for i, riichi_eval in enumerate(riichi_evals):
@@ -639,7 +638,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
 
     # 点数変更
     if is_tsumo:
-        player_points[win_player-1] += result.cost['main']+result.cost['additional']*2
+        player_points[win_player] += result.cost['main']+result.cost['additional']*2
         # 減点
         for i in range(4-is_sanma):
             if i != win_player:
