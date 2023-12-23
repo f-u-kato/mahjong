@@ -332,9 +332,9 @@ def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is
                 break
             c2 = cv2.waitKey(1)
             if c2 == ord('q'):
-                return -1, -1
+                return -1, -1, 0
             elif c2 == ord('p'):
-                return -2, -2
+                return -2, -2, 0
         # 再び検出牌を表示
         show_img(img, m, field_points, M=sM, reduction=reduction)
         cv2.waitKey(1)

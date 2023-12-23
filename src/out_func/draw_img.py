@@ -378,7 +378,6 @@ def draw_player_wintile(field_points, player, size=(2160, 3840, 3), img=None, fi
         pt2 = [pt1[0]+hai_size*4//3, pt1[1]+hai_size*4//3]
     return [pt1, pt2]
 
-
 def draw_player_rect(field_points, player, size=(2160, 3840, 3), img=None, first=False, color=(0, 255, 0), return_points=False, reduction=1, is_sanma=False):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])

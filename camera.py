@@ -243,54 +243,63 @@ def camera():
     # ゲーム開始
     min_size=(540, 960, 3)
     reduction = size[0]/min_size[0]
-    read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, dst=dst,
-                                player_points=player_points, reduction=reduction, save_movie=save_movie, effect=effect)
+    # read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, dst=dst,
+    #                             player_points=player_points, reduction=reduction, save_movie=save_movie, effect=effect)
+    
+    get_hand(field_points, size, cap, cM, ton_player, m, dst,reduction)
     return
     
 
-def hand_camera():
-    m=get_monitors()[1]
-    cap = cv2.VideoCapture(1)
-    cap.set(cv2.CAP_PROP_AUTOFOCUS,0)
-    cap.set(cv2.CAP_PROP_FOCUS,0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH,3840)
-     # カメラ調節
-    while(cap.isOpened()):
-        ret, im = cap.read()
-        field_points=area.get_green(im)
-        color = (0, 255, 0)
-        # im,_=transform_camera(im,dst=field_points)
+# 上がり牌のチェック
+def get_hand(field_points, size, cap, cM, ton_player, m, dst,reduction=1):
 
-        if len(field_points) > 0:
-            new_im=im.copy()
-            cv2.rectangle(new_im, field_points[0], field_points[1], color,3)
-            cv2.imshow("Camera", cv2.resize(new_im,(1920,1080)))
-            size=im.shape
-            
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    #-卓領域検出
-    while(cap.isOpened()):
+    # 領域の投影
+    # 手牌
+    def_img = draw.draw_kaze(field_points, ton_player, reduction=reduction)
+    for i in range(4):
+        [pt1, pt2] = draw.draw_player_hand(field_points, i, size, reduction=reduction)
+        cv2.rectangle(def_img, pt1, pt2, (0, 255, 0), int(3//reduction))
+
+    # 投影変換の計算
+    sM = ov.show_img(def_img, m, field_points, dst=dst, reduction=reduction)
+    
+    count=0
+    mode=0
+    save_dir= f"./save_ryukyoku/{mode}"
+    os.makedirs(save_dir,exist_ok=True)
+    ret, im = cap.read()
+    im = trans.transform_camera(im, M=cM)
+    cv2.imshow("Camera", cv2.resize(im.copy(), (1920, 1080)))
+
+    cv2.waitKey()
+
+    while (cap.isOpened()):
+
+        cv2.waitKey(1)
+
+        # カメラ映像の取得
         ret, im = cap.read()
-        field_points=area.get_green(im)
-        if len(field_points) > 0:
-            break
-    _,cM=transform_camera(im,dst=field_points)
-    img=draw.draw_player_rect(field_points,2,size)
-    sM=show_img(img,m,field_points)
-    count=33
-    while(1):
-        ret, im = cap.read()
-        im=transform_camera(im,M=cM)
-        cv2.imshow('Camera',cv2.resize(im,(1920,1080)))
-        c=cv2.waitKey(1)
+        im = trans.transform_camera(im, M=cM)
+        cv2.imshow("Camera", cv2.resize(im.copy(), (1920, 1080)))
+
+        if count % 10 == 0:
+            for i in range(4):
+                image=get.get_hand(field_points, i, im)
+                cv2.imwrite(os.path.join(save_dir,f"{i}_{count}.png"),image)
+            print("save")
+        count += 1
+
+        c = cv2.waitKey(1)
+        # トリガー検出ミスの場合
         if c == ord('q'):
-            break
-        elif c==ord("p"):
-            img=get.get_hand(field_points,2,im,size)
-            cv2.imwrite(f"./time/hand{count}.png",img)
-            print(count)
-            count+=1
+            if mode==2:
+                break
+            mode+=1
+            save_dir= f"./save_ryukyoku/{mode}"
+            os.makedirs(save_dir,exist_ok=True)
+            print(save_dir)
+            cv2.waitKey()
+    return
         
 
 def get_max_int(folder_path):
