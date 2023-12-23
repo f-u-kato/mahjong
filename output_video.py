@@ -78,9 +78,9 @@ def get_wind(player_num, ton_num):
 # トリガーの判定
 
 
-def check_tile(field_points, im, size=(2160, 3840, 3), threshold=0.8):
+def check_tile(field_points, im, size=(2160, 3840, 3), threshold=0.8, is_sanma=False):
     images = []
-    for i in range(4):
+    for i in range(4-is_sanma):
         img = get.get_trigger(field_points, i, im)
         images.append(img)
 
@@ -211,7 +211,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
             save_movie.write(cv2.resize(im, (1920, 1080)))
 
         # トリガー検出
-        win_player = check_tile(field_points, im, size)
+        win_player = check_tile(field_points, im, size, is_sanma=is_sanma)
         if win_player > -1:
             print('check')
             break
@@ -231,7 +231,6 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
             for i, riichi_eval in enumerate(riichi_evals):
                 if riichi_eval == 1 and not isRiichi[i]:
                     r_count[i] += 1
-                    print(i,r_count[i])
                     # 立直判定が一定数以上の場合，立直を宣言
                     if r_count[i] > r_max:
                         # 初めての立直の場合，立直の音楽を再生
@@ -261,12 +260,11 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
                     if not (-1 in r_count):
                         music.loop_music(RIICHI_BGM[rand])
                     r_count[i] = -1
-                    print(i)
                 else:
                     img = tmp_img
 
         # トリガー動画の投影
-        img = draw.draw_rect_movie(field_points, trigger, size, img=img, reduction=reduction)
+        img = draw.draw_rect_movie(field_points, trigger, size, img=img, reduction=reduction, is_sanma=is_sanma)
         # 情報の投影
         img = draw.draw_riichi(field_points, img=img, reduction=reduction)
         img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction,is_sanma=is_sanma)
@@ -572,7 +570,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             is_tsumo = win_player == lose_player
             # 点数計算
             result = mahjong_calculation.mahjong_auto(hand_classes, naki_classes, naki_boxes, dora_classes, dora_boxes, win_class, win_box, get_wind(
-                win_player, ton_player), round_wind=round_wind, honba=honba, is_tsumo=is_tsumo, is_sanma=is_sanma, is_tonpu=is_tonpu)
+                win_player, ton_player), round_wind=round_wind, honba=honba, is_tsumo=is_tsumo, is_sanma=is_sanma)
 
             # 点数計算失敗
             draw_flag = True
@@ -771,6 +769,8 @@ def main():
     
     # ゲーム開始前の設定
     is_sanma, is_tonpu, end_point = setting_window()
+    print(is_sanma,is_tonpu)
+    print(4-is_sanma)
     is_over = False
     if is_sanma:
         player_points = [35000, 35000, 35000]

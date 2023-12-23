@@ -251,18 +251,19 @@ def draw_rect_movie(field_points, cap, size=(2160, 3840, 3), img=None, color=(0,
     pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
     img = place_img(img, frame, field_points, pt1)
     
-    pt1 = [draw_points[1][0]-hai_point[1], draw_points[0][1]+hai_point[0]]
-    pt2 = [pt1[0]-hai_size, pt1[1]+hai_size]
-    pt1, pt2 = min_max_xy(pt1, pt2)
-    pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
-    img = place_img(img, frame, field_points, pt1)
-
-    if is_sanma:
-        pt1 = [draw_points[0][0]+hai_point[1], draw_points[1][1]-hai_point[0]]
-        pt2 = [pt1[0]+hai_size, pt1[1]-hai_size]
+    if not is_sanma:
+        pt1 = [draw_points[1][0]-hai_point[1], draw_points[0][1]+hai_point[0]]
+        pt2 = [pt1[0]-hai_size, pt1[1]+hai_size]
         pt1, pt2 = min_max_xy(pt1, pt2)
         pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
         img = place_img(img, frame, field_points, pt1)
+
+    
+    pt1 = [draw_points[0][0]+hai_point[1], draw_points[1][1]-hai_point[0]]
+    pt2 = [pt1[0]+hai_size, pt1[1]-hai_size]
+    pt1, pt2 = min_max_xy(pt1, pt2)
+    pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
+    img = place_img(img, frame, field_points, pt1)
     return img
 
 

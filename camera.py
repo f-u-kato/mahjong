@@ -102,7 +102,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         if count % 10 == 0:
             for i in range(4):
                 riichi_image=get.get_riichi(field_points, i, im)
-                cv2.imshow(str(i),riichi_image)
+                cv2.imwrite(os.path.join(save_dir,f"new_riichi{i}_{count}.png"),riichi_image)
             print("save")
         count += 1
             
