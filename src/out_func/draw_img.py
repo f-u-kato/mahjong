@@ -218,7 +218,7 @@ def draw_rect(field_points, size=(2160, 3840, 3), img=None, color=(0, 255, 0), r
     return img
 
 
-def draw_rect_movie(field_points, cap, size=(2160, 3840, 3), img=None, color=(0, 255, 0), reduction=1, speed=3):
+def draw_rect_movie(field_points, cap, size=(2160, 3840, 3), img=None, color=(0, 255, 0), reduction=1, speed=3, is_sanma=False):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
@@ -250,17 +250,19 @@ def draw_rect_movie(field_points, cap, size=(2160, 3840, 3), img=None, color=(0,
     pt1, pt2 = min_max_xy(pt1, pt2)
     pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
     img = place_img(img, frame, field_points, pt1)
+    
     pt1 = [draw_points[1][0]-hai_point[1], draw_points[0][1]+hai_point[0]]
     pt2 = [pt1[0]-hai_size, pt1[1]+hai_size]
     pt1, pt2 = min_max_xy(pt1, pt2)
     pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
     img = place_img(img, frame, field_points, pt1)
 
-    pt1 = [draw_points[0][0]+hai_point[1], draw_points[1][1]-hai_point[0]]
-    pt2 = [pt1[0]+hai_size, pt1[1]-hai_size]
-    pt1, pt2 = min_max_xy(pt1, pt2)
-    pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
-    img = place_img(img, frame, field_points, pt1)
+    if is_sanma:
+        pt1 = [draw_points[0][0]+hai_point[1], draw_points[1][1]-hai_point[0]]
+        pt2 = [pt1[0]+hai_size, pt1[1]-hai_size]
+        pt1, pt2 = min_max_xy(pt1, pt2)
+        pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
+        img = place_img(img, frame, field_points, pt1)
     return img
 
 
@@ -376,7 +378,7 @@ def draw_player_wintile(field_points, player, size=(2160, 3840, 3), img=None, fi
     return [pt1, pt2]
 
 
-def draw_player_rect(field_points, player, size=(2160, 3840, 3), img=None, first=False, color=(0, 255, 0), return_points=False, reduction=1):
+def draw_player_rect(field_points, player, size=(2160, 3840, 3), img=None, first=False, color=(0, 255, 0), return_points=False, reduction=1, is_sanma=False):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
@@ -401,7 +403,7 @@ def draw_player_rect(field_points, player, size=(2160, 3840, 3), img=None, first
     if first:
         img = first_img
     # あがりはい
-    for i in range(4):
+    for i in range(4-is_sanma):
         [pt1, pt2] = draw_player_wintile(field_points, i, size, img, first, color, return_points, reduction)
         cv2.rectangle(img, pt1, pt2, color, int(3//reduction))
         if i == player:
@@ -562,14 +564,14 @@ def draw_ura_rect(field_points, size=(2160, 3840, 3), img=None, reduction=1):
 
 
 # 点数表示
-def draw_player_points(field_points, player_points, size=(2160, 3840, 3), img=None, reduction=1):
+def draw_player_points(field_points, player_points, size=(2160, 3840, 3), img=None, reduction=1, is_sanma=False):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
     hai_size = max(draw_points[1][0]-draw_points[0][0], draw_points[1][1]-draw_points[0][1])//15
     if img is None:
         img = np.zeros(draw_size, np.uint8)
-    for i in range(4):
+    for i in range(4-is_sanma):
         add_img = num_img(player_points[i])
         add_img = cv2.resize(add_img, [int(add_img.shape[1]*0.8//reduction), int(add_img.shape[0]*0.8//reduction)])
         if i == 0:
@@ -587,7 +589,7 @@ def draw_player_points(field_points, player_points, size=(2160, 3840, 3), img=No
     return img
 
 
-def draw_kaze(field_points, player, size=(2160, 3840, 3), img=None, reduction=1):
+def draw_kaze(field_points, player, size=(2160, 3840, 3), img=None, reduction=1,is_sanma=False):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
@@ -595,8 +597,11 @@ def draw_kaze(field_points, player, size=(2160, 3840, 3), img=None, reduction=1)
         img = np.zeros(draw_size, np.uint8)
 
     hai_size = max(draw_points[1][0]-draw_points[0][0], draw_points[1][1]-draw_points[0][1])//15
-    kaze_img = ['./material/wind/higashi.png', './material/wind/minami.png', './material/wind/nishi.png', './material/wind/kita.png']
-    kaze_img = kaze_img[4-player:]+kaze_img[:4-player]
+    if is_sanma:
+        kaze_img = ['./material/wind/higashi.png', './material/wind/minami.png', './material/wind/nishi.png']
+    else:
+        kaze_img = ['./material/wind/higashi.png', './material/wind/minami.png', './material/wind/nishi.png', './material/wind/kita.png']
+    kaze_img = kaze_img[len(kaze_img)-player:]+kaze_img[:len(kaze_img)-player]
 
     add_img = cv2.imread(kaze_img[0], -1)
     add_img = cv2.rotate(add_img, cv2.ROTATE_180)
@@ -612,10 +617,11 @@ def draw_kaze(field_points, player, size=(2160, 3840, 3), img=None, reduction=1)
     add_img = cv2.resize(add_img, [hai_size, hai_size])
     r_im = place_img(r_im, add_img, draw_points, [draw_points[1][0]-hai_size, draw_points[1][1]-hai_size])
 
-    add_img = cv2.imread(kaze_img[3], -1)
-    add_img = cv2.rotate(add_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-    add_img = cv2.resize(add_img, [hai_size, hai_size])
-    r_im = place_img(r_im, add_img, draw_points, [draw_points[1][0]-hai_size, draw_points[0][1]])
+    if not is_sanma:
+        add_img = cv2.imread(kaze_img[3], -1)
+        add_img = cv2.rotate(add_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        add_img = cv2.resize(add_img, [hai_size, hai_size])
+        r_im = place_img(r_im, add_img, draw_points, [draw_points[1][0]-hai_size, draw_points[0][1]])
 
     return r_im
 

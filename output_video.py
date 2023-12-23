@@ -19,7 +19,6 @@ import src.get_func.get_img as get
 import src.eval.calculation as mahjong_calculation
 import src.out_func.play_music as music
 import src.out_func.transform_video as trans
-import src.out_func.create_window as cw
 # import src.out_func.camera as camera
 
 import concurrent.futures
@@ -148,7 +147,7 @@ def setting_window():
     # ウィンドウを作成
     app = ctk.CTk()
     app.geometry("800x500")
-    app.title('麻雀ゲームの設定')
+    app.title('麻雀の設定')
 
     # ラジオボタン
     mode_type = tk.IntVar(value=0)
@@ -177,7 +176,7 @@ def setting_window():
     is_tonpu = mode_type.get() % 2 == 0
     return is_sanma, is_tonpu, end_score.get()*is_check.get()
 
-def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, dst, player_points, reduction=1, save_movie=None, effect=None):
+def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, dst, player_points, reduction=1, save_movie=None, effect=None, is_sanma=False):
     # 立直の判定
     isRiichi = [False, False, False, False]
     # 立直判定のカウント
@@ -192,9 +191,9 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
     # 情報と領域の投影
     img = draw.draw_rect_movie(field_points, trigger, size, img=None, reduction=reduction)
     img = draw.draw_riichi(field_points, img=img, reduction=reduction)
-    img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction)
+    img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction, is_sanma=is_sanma)
     img = draw.draw_honba(field_points, ton_player, round_wind, honba, img=img, reduction=reduction)
-    img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction)
+    img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
     sM = show_img(img, m, field_points, dst=dst, reduction=reduction)
     cv2.waitKey(1)
     # 音楽再生
@@ -225,7 +224,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         # 立直判定
         if sum(isRiichi) < len(isRiichi):
             riichi_images = []
-            for i in range(4):
+            for i in range(4-is_sanma):
                 cv2.imshow(str(i),get.get_riichi(field_points, i, im))
                 riichi_images.append(get.get_riichi(field_points, i, im))
             riichi_evals = eval.multi_riichi_eval(riichi_images)
@@ -254,7 +253,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         img = draw.loop_movie(field_points, video, size, ton_player, reduction=reduction, speed=speed)
 
         # 立直演出
-        for i in range(4):
+        for i in range(4-is_sanma):
             if isRiichi[i] and r_count[i] > r_max:
                 tmp_img = draw.back_place(r_video, img, field_points, i, time=r_frame[i], reduction=reduction,skelton=True)
                 r_frame[i] += 3
@@ -270,9 +269,9 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         img = draw.draw_rect_movie(field_points, trigger, size, img=img, reduction=reduction)
         # 情報の投影
         img = draw.draw_riichi(field_points, img=img, reduction=reduction)
-        img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction)
+        img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction,is_sanma=is_sanma)
         img = draw.draw_honba(field_points, ton_player, round_wind, honba, img=img, reduction=reduction)
-        img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction)
+        img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
         if effect is not None:
             effect.write(cv2.resize(img, (1920, 1080)))
         show_img(img, m, field_points, M=sM, reduction=reduction)
@@ -291,8 +290,8 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
     return win_player, isRiichi
 
 # 上がり牌配置領域に牌がなくなるまで待機
-def wait_no_wintile(field_points, win_player, size, dst, cap, cM, m, im=None, reduction=1, save_movie=None, effect=None):
-    img = draw.draw_player_rect(field_points, win_player, size, first=True, img=im, reduction=reduction)
+def wait_no_wintile(field_points, win_player, size, dst, cap, cM, m, im=None, reduction=1, save_movie=None, effect=None, is_sanma=False):
+    img = draw.draw_player_rect(field_points, win_player, size, first=True, img=im, reduction=reduction, is_sanma=is_sanma)
     show_img(img, m, field_points, dst=dst, reduction=reduction)
     while (cap.isOpened()):
         ret, im = cap.read()
@@ -302,7 +301,7 @@ def wait_no_wintile(field_points, win_player, size, dst, cap, cM, m, im=None, re
         if effect is not None:
             effect.write(cv2.resize(img, (1920, 1080)))
         isHai = False
-        for i in range(4):
+        for i in range(4-is_sanma):
             if in_hai(get.get_wintile(field_points, i, im, size)):
                 isHai = True
         if not isHai:
@@ -312,13 +311,13 @@ def wait_no_wintile(field_points, win_player, size, dst, cap, cM, m, im=None, re
             break
 
 # 上がり牌のチェック
-def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is_eval_draw=True, reduction=1, save_movie=None, effect=None):
+def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is_eval_draw=True, reduction=1, save_movie=None, effect=None, is_sanma=False):
     # SEの再生
     music.stop_music()
     music.play_se(TRIGGER_SE[random.randint(0, len(TRIGGER_SE)-1)])
     # 領域の投影
-    def_img = draw.draw_player_rect(field_points, win_player, size, reduction=reduction)
-    def_img = draw.draw_kaze(field_points, ton_player, img=def_img, reduction=reduction)
+    def_img = draw.draw_player_rect(field_points, win_player, size, reduction=reduction, is_sanma=is_sanma)
+    def_img = draw.draw_kaze(field_points, ton_player, img=def_img, reduction=reduction, is_sanma=is_sanma)
 
     # 投影変換の計算
     sM = show_img(def_img, m, field_points, dst=dst, reduction=reduction)
@@ -352,7 +351,7 @@ def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is
 
         # 上がり牌の検出
         hai_images = []
-        for i in range(4):
+        for i in range(4-is_sanma):
             hai_images.append(get.get_wintile(field_points, i, im, size))
         win_evals = eval.multi_win_eval(hai_images, 0.8)
         for i, win_eval in enumerate(win_evals):
@@ -456,8 +455,8 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
     # 目印用表示
     img = draw.draw_rect(field_points, size, reduction=reduction)
     img = draw.draw_ura_rect(field_points, size, img, reduction=reduction)
-    img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction)
-    img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction)
+    img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction, is_sanma=is_sanma)
+    img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
     # img=draw.draw_honba(field_points,ton_player,round_wind,honba,img=img,reduction=reduction)
 
     # 投影
@@ -497,7 +496,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
         reduction = size[0]/min_size[0]
         # トリガー検出
         win_player,isRiichi = read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, dst=dst,
-                                  player_points=player_points, reduction=reduction, save_movie=save_movie, effect=effect)
+                                  player_points=player_points, reduction=reduction, save_movie=save_movie, effect=effect, is_sanma=is_sanma)
         # リーチ分を加算
         kyotaku+=sum(isRiichi)
         st_time = time.time()
@@ -521,15 +520,15 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             
             # 待機
             wait_no_wintile(field_points, win_player, size, dst, cap, cM, m, img,
-                            reduction=size[0]/read_size[0], save_movie=save_movie, effect=effect)
+                            reduction=size[0]/read_size[0], save_movie=save_movie, effect=effect, is_sanma=is_sanma)
 
             # 牌配置待機
             win_class, win_box, lose_player = read_wintile(field_points, win_player, size, cap, cM, ton_player,
-                                                           m, dst=dst, is_eval_draw=True, reduction=size[0]/read_size[0], save_movie=save_movie, effect=effect)
+                                                           m, dst=dst, is_eval_draw=True, reduction=size[0]/read_size[0], save_movie=save_movie, effect=effect, is_sanma=is_sanma)
             # トリガー検出へ戻る
             if win_class == -1:
                 kyotaku-=sum(isRiichi)
-                for i in range(4):
+                for i in range(4-is_sanma):
                     player_points[i] += 1000*isRiichi[i]
                 break
             # 点数スキップ
@@ -573,7 +572,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             is_tsumo = win_player == lose_player
             # 点数計算
             result = mahjong_calculation.mahjong_auto(hand_classes, naki_classes, naki_boxes, dora_classes, dora_boxes, win_class, win_box, get_wind(
-                win_player, ton_player), round_wind=round_wind, honba=honba, is_tsumo=is_tsumo)
+                win_player, ton_player), round_wind=round_wind, honba=honba, is_tsumo=is_tsumo, is_sanma=is_sanma, is_tonpu=is_tonpu)
 
             # 点数計算失敗
             draw_flag = True
@@ -600,8 +599,8 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             img = draw.draw_dora(field_points, dora_classes, dora_boxes, win_player, size, img, reduction=reduction)
             img = draw.draw_naki(field_points, naki_classes, naki_boxes, win_player, size, img, reduction=reduction)
             img = draw.draw_wintile(field_points, win_class, win_box, lose_player, size, img, reduction=reduction)
-            img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction)
-            img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction)
+            img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction, is_sanma=is_sanma)
+            img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
             _ = show_img(img, m, field_points, dst=dst, reduction=reduction)
             cv2.waitKey(1)
 
@@ -613,8 +612,8 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
                 img = draw.draw_dora(field_points, dora_classes, dora_boxes, win_player, size, img, reduction=reduction)
                 img = draw.draw_naki(field_points, naki_classes, naki_boxes, win_player, size, img, reduction=reduction)
                 img = draw.draw_wintile(field_points, win_class, win_box, lose_player, size, img, reduction=reduction)
-                img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction)
-                img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction)
+                img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction, is_sanma=is_sanma)
+                img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
                 time.sleep(1)
                 if agari == 4:
                     time.sleep(1)
@@ -644,7 +643,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
     if is_tsumo:
         player_points[win_player-1] += result.cost['main']+result.cost['additional']*2
         # 減点
-        for i in range(4):
+        for i in range(4-is_sanma):
             if i != win_player:
                 if i == ton_player:
                     player_points[i] -= result.cost['main']
@@ -778,7 +777,7 @@ def main():
 
     # ゲーム開始
     while (isContinue):
-        while (ton_player < 4 and isContinue):
+        while (ton_player < 4 - is_sanma and isContinue):
             # 局の開始
             win_result, time_df, isContinue, kyotaku = mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
                                                            save_time=time_df, round_wind=round_wind, honba=honba, kyotaku=kyotaku, save_movie=save_movie, effect=effect, is_sanma=is_sanma)
@@ -790,9 +789,10 @@ def main():
             if win_result == 1:
                 honba = 0
             # 飛んだ場合，終了
-            if player_points[0] < 0 or player_points[1] < 0 or player_points[2] < 0 or player_points[3] < 0:
-                isContinue = False
-                break
+            for i in range(4-is_sanma):
+                if player_points[i] < 0:
+                    isContinue = False
+                    break
             if is_over and max(player_points) >= end_point:
                 isContinue = False
                 break
@@ -810,8 +810,8 @@ def main():
 
     cap.release()
     music.play_music("./music/成功音.mp3")
-    img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction)
-    img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction)
+    img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction, is_sanma=is_sanma)
+    img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction, is_sanma=is_sanma)
     show_img(img, m, field_points, dst=dst, reduction=reduction)
     c = cv2.waitKey()
     effect.release()
