@@ -53,7 +53,8 @@ def plot_history(history):
 
     plt.show()
 
-def resnet_train(name='riichi'):
+
+def resnet_train(name='riichi',class_num=2):
     model=models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
     model.fc = torch.nn.Linear(model.fc.in_features, 1)
     save_path=f'./weights/{name}_resnet18'
@@ -91,7 +92,7 @@ def resnet_train(name='riichi'):
     dataloaders={'train':train_dataLoader,'val':val_dataLoader}
 
     # 出力層の出力数を ImageNet の 1000 からこのデータセットのクラス数である 2 に置き換える。
-    model.fc = nn.Linear(model.fc.in_features, 2)    # モデルを計算するデバイスに転送する。
+    model.fc = nn.Linear(model.fc.in_features, class_num)    # モデルを計算するデバイスに転送する。
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
     if device==torch.device("cpu"):
@@ -105,7 +106,7 @@ def resnet_train(name='riichi'):
     # 最適化手法を選択する。
     optimizer = torch.optim.Adam(model_ft.parameters(), lr=0.001)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
-    n_epochs = 20  # エポック数
+    n_epochs = 10  # エポック数
     history= train(
         model_ft, criterion, optimizer, scheduler, dataloaders, device, n_epochs
     )
@@ -218,8 +219,8 @@ def train_val_div(source_folder,train_ratio=0.8):
             shutil.copy(file, f'./{source_folder}/val/{class_folder}')
 
 if __name__ == '__main__':
-    train_val_div('./save_riichi')
-    resnet_train('save_riichi')
+    train_val_div('./save_ryukyoku')
+    resnet_train('save_ryukyoku',class_num=3)
     # resnet_train('trigger')
     # trigger_test()
     # img_path=r"F:\PBL\yolact\trriger\val\0\970.png"
