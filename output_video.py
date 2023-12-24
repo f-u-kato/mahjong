@@ -51,6 +51,7 @@ YAKUMAN_VIDEOS = ['./material/役満1.mp4', './material/役満2.mov', './materia
 TRIGGER_VIDEOS = ['./material/trigger/0.mp4', './material/trigger/1.mp4']
 RIICHI_SE = ["./music/riichi.mp3"]
 RIICHI_VIDEO = "./material/riichi.mp4"
+TENPAI_SE = ["./music/no_ten.mp3","./music/tenpai.mp3"]
 
 
 MAHJONG_CLASSES = ("1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m",
@@ -225,13 +226,11 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         if sum(isRiichi) < len(isRiichi):
             riichi_images = []
             for i in range(4-is_sanma):
-                cv2.imshow(str(i),get.get_riichi(field_points, i, im))
                 riichi_images.append(get.get_riichi(field_points, i, im))
             riichi_evals = eval.multi_riichi_eval(riichi_images)
             for i, riichi_eval in enumerate(riichi_evals):
                 if riichi_eval == 1 and not isRiichi[i]:
                     r_count[i] += 1
-                    print(i,r_count[i])
                     # 立直判定が一定数以上の場合，立直を宣言
                     if r_count[i] > r_max:
                         # 初めての立直の場合，立直の音楽を再生
@@ -261,7 +260,6 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
                     if not (-1 in r_count):
                         music.loop_music(RIICHI_BGM[rand])
                     r_count[i] = -1
-                    print(i)
                 else:
                     img = tmp_img
 
@@ -399,6 +397,7 @@ def ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, red
     is_tenpai = [False, False, False, False]
     is_check = [False, False, False, False]
     t_count = [0, 0, 0, 0]
+    skip_count=0
 
     while (cap.isOpened()):
         # カメラ映像の取得
@@ -412,42 +411,47 @@ def ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, red
         for i in range(4-is_sanma):
             hai_img = get.get_hand(field_points, i, im, size)
             images.append(hai_img)
-        ryukyoku_eval = eval.ryukyoku_eval(images)
+        ryukyoku_eval = eval.mulri_ryukyoku_eval(images)
         for i, ryukyoku in enumerate(ryukyoku_eval):
             if not is_check[i]:
                 if ryukyoku == 1:
-                    if t_count<0:
+                    if t_count[i]<0:
                         t_count[i]=0
                     t_count[i] += 1
-                    if t_count[i] > 5:
+                    if t_count[i] > 10:
                         is_tenpai[i] = True
                         is_check[i] = True
                         [pt1, pt2] = draw.draw_player_hand(field_points, i, size, reduction=reduction)
-                        cv2.rectangle(img, pt1, pt2, (255, 0, 0), int(3//reduction))
+                        cv2.rectangle(img, pt1, pt2, (255, 255, 0), int(3//reduction))
                         show_img(img, m, field_points, dst=dst, reduction=reduction, M=sM)
+                        music.play_se(TENPAI_SE[1])
                 elif ryukyoku==2:
-                    if t_count>0:
+                    if t_count[i]>0:
                         t_count[i]=0
                     t_count[i]-=1
-                    if t_count[i] < -5:
+                    if t_count[i] < -10:
                         is_tenpai[i] = False
                         is_check[i] = True
                         [pt1, pt2] = draw.draw_player_hand(field_points, i, size, reduction=reduction)
-                        cv2.rectangle(img, pt1, pt2, (255, 255, 255), int(3//reduction))
+                        cv2.rectangle(img, pt1, pt2, (0, 0, 255), int(3//reduction))
                         show_img(img, m, field_points, dst=dst, reduction=reduction, M=sM)
+                        music.play_se(TENPAI_SE[0])
                 else:
                     t_count[i] = 0
         # 間違えていた場合，戻る
         c = cv2.waitKey(1)
-        if c == ord('q'):
-            return player_points, -1
+        if skip_count<50:
+            skip_count+=1
+        else:
+            if c == ord('q'):
+                return player_points, -1
                 
         # すべて確認した場合，終了
         if sum(is_check) == 4-is_sanma:
             break
     # ノーテン罰符の支払い
     if sum(is_tenpai) != 4-is_sanma and sum(is_tenpai) != 0:
-        not_tenpai_point=(2000+1000*is_sanma)
+        not_tenpai_point=(3000-1000*is_sanma)
         for i in range(4-is_sanma):
             if is_tenpai[i]:
                 player_points[i] += not_tenpai_point // sum(is_tenpai)
@@ -719,7 +723,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
 
     # 点数変更
     if is_tsumo:
-        player_points[win_player-1] += result.cost['main']+result.cost['additional']*2
+        player_points[win_player] += result.cost['main']+result.cost['additional']*(2-is_sanma)
         # 減点
         for i in range(4-is_sanma):
             if i != win_player:
@@ -888,11 +892,12 @@ def main():
 
     cap.release()
     music.play_music("./music/成功音.mp3")
-    img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction, is_sanma=is_sanma)
+    img = draw.draw_kaze(field_points, ton_player, reduction=reduction, is_sanma=is_sanma)
     img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction, is_sanma=is_sanma)
     show_img(img, m, field_points, dst=dst, reduction=reduction)
     c = cv2.waitKey()
-    effect.release()
+    if effect is not None:
+        effect.release()
     return
 
 

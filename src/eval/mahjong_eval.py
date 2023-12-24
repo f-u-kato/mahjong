@@ -85,7 +85,7 @@ transform = transforms.Compose([
 def mulri_ryukyoku_eval(imgs):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     imgs = [cv2pil(img) for img in imgs]
-    model = torch.load('./weights/save_ryukyoku/model_20.pth')
+    model = torch.load('./weights/save_ryukyoku/model_10.pth')
     model = model.to(device)
     inputs = torch.stack([transform(img).to(device) for img in imgs])
     outputs = model(inputs)
