@@ -300,6 +300,7 @@ def mahjong_hand(classes,win,melds_tiles):
         if i>13-melds_len:
             print(i,'break')
             break
+        
         class_list.append(MAHJONG_CLASSES[c])
         mc = MAHJONG_CLASSES[c]
         if mc[-1] == 'm':
