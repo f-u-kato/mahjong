@@ -797,7 +797,7 @@ def draw_result(result, field_points, player, size=(2160, 3840, 3), img=None, re
     return r_im
 
 
-def draw_honba(field_points, ton_player, round_wind, honba=0, size=(2160, 3840, 3), img=None, reduction=1):
+def draw_honba(field_points, ton_player, round_wind, honba=0, kyotaku=0, size=(2160, 3840, 3), img=None, reduction=1):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
@@ -848,6 +848,20 @@ def draw_honba(field_points, ton_player, round_wind, honba=0, size=(2160, 3840, 
     add_img = cv2.resize(add_img, [int(add_img.shape[1]//reduction), int(add_img.shape[0]//reduction)])
     add_img = cv2.rotate(add_img, cv2.ROTATE_180)
     img = place_img(img, add_img, draw_points, pt1)
+
+    # 1000点棒
+    add_img = cv2.imread(honba_img, -1)
+    add_img = cv2.resize(add_img, [int(add_img.shape[1]//reduction), int(add_img.shape[0]//reduction)])
+    add_img = cv2.rotate(add_img, cv2.ROTATE_180)
+    img = place_img(img, add_img, draw_points, pt1)
+
+    # 教卓数
+    pt1[0] -= add_img.shape[1]*3
+    add_img = num_img(kyotaku)
+    add_img = cv2.resize(add_img, [int(add_img.shape[1]//reduction), int(add_img.shape[0]//reduction)])
+    add_img = cv2.rotate(add_img, cv2.ROTATE_180)
+    img = place_img(img, add_img, draw_points, pt1)
+
 
     return img
 

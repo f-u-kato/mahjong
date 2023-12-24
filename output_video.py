@@ -177,7 +177,7 @@ def setting_window():
     is_tonpu = mode_type.get() % 2 == 0
     return is_sanma, is_tonpu, end_score.get()*is_check.get()
 
-def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, dst, player_points, reduction=1, save_movie=None, effect=None, is_sanma=False):
+def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, kyotaku, dst, player_points, reduction=1, save_movie=None, effect=None, is_sanma=False):
     # 立直の判定
     isRiichi = [False, False, False, False]
     # 立直判定のカウント
@@ -193,7 +193,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
     img = draw.draw_rect_movie(field_points, trigger, size, img=None, reduction=reduction)
     img = draw.draw_riichi(field_points, img=img, reduction=reduction)
     img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction, is_sanma=is_sanma)
-    img = draw.draw_honba(field_points, ton_player, round_wind, honba, img=img, reduction=reduction)
+    img = draw.draw_honba(field_points, ton_player, round_wind, honba, kyotaku,img=img, reduction=reduction)
     img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
     sM = show_img(img, m, field_points, dst=dst, reduction=reduction)
     cv2.waitKey(1)
@@ -268,7 +268,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         # 情報の投影
         img = draw.draw_riichi(field_points, img=img, reduction=reduction)
         img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction,is_sanma=is_sanma)
-        img = draw.draw_honba(field_points, ton_player, round_wind, honba, img=img, reduction=reduction)
+        img = draw.draw_honba(field_points, ton_player, round_wind, honba, kyotaku,img=img, reduction=reduction)
         img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
         if effect is not None:
             effect.write(cv2.resize(img, (1920, 1080)))
@@ -570,7 +570,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
     while (isRead):
         reduction = size[0]/min_size[0]
         # トリガー検出
-        win_player,isRiichi = read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, dst=dst,
+        win_player,isRiichi = read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, kyotaku=kyotaku dst=dst,
                                   player_points=player_points, reduction=reduction, save_movie=save_movie, effect=effect, is_sanma=is_sanma)
         # リーチ分を加算
         kyotaku+=sum(isRiichi)
