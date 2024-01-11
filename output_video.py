@@ -79,9 +79,9 @@ def get_wind(player_num, ton_num):
 # トリガーの判定
 
 
-def check_tile(field_points, im, size=(2160, 3840, 3), threshold=0.8):
+def check_tile(field_points, im, size=(2160, 3840, 3), threshold=0.8, is_sanma=False):
     images = []
-    for i in range(4):
+    for i in range(4-is_sanma):
         img = get.get_trigger(field_points, i, im)
         images.append(img)
 
@@ -212,7 +212,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
             save_movie.write(cv2.resize(im, (1920, 1080)))
 
         # トリガー検出
-        win_player = check_tile(field_points, im, size)
+        win_player = check_tile(field_points, im, size, is_sanma=is_sanma)
         if win_player > -1:
             print('check')
             break
@@ -264,7 +264,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
                     img = tmp_img
 
         # トリガー動画の投影
-        img = draw.draw_rect_movie(field_points, trigger, size, img=img, reduction=reduction)
+        img = draw.draw_rect_movie(field_points, trigger, size, img=img, reduction=reduction,is_sanma=is_sanma)
         # 情報の投影
         img = draw.draw_riichi(field_points, img=img, reduction=reduction)
         img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction,is_sanma=is_sanma)
