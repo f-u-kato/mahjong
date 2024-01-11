@@ -211,7 +211,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         if save_movie is not None:
             save_movie.write(cv2.resize(im, (1920, 1080)))
         # トリガー検出
-        trigger = executor.submit(check_tile, field_points, im.copy(), size)
+        trigger_process = executor.submit(check_tile, field_points, im.copy(), size)
 
         # 立直判定
         riichi_images = []
@@ -233,12 +233,12 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
             cv2.imshow("Camera", cv2.resize(out_im, (1920, 1080)))
 
             # トリガー検出
-            if trigger.done():
+            if trigger_process.done():
                 win_player = trigger.result()
                 if win_player > -1:
                     print('check')
                     break
-                trigger = executor.submit(check_tile, field_points, im, size)
+                trigger_process = executor.submit(check_tile, field_points, im.copy(), size)
             
 
             # 立直判定
