@@ -21,7 +21,7 @@ import src.out_func.play_music as music
 import src.out_func.transform_video as trans
 # import src.out_func.camera as camera
 
-import concurrent.futures
+from concurrent.futures import ProcessPoolExecutor
 
 
 # 結果出力用
@@ -204,86 +204,108 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
     # 背景動画の読み込み
     video = cv2.VideoCapture(BACK_MOVIES[rand])
 
-    while (cap.isOpened()):
+    with ProcessPoolExecutor(max_workers=2) as executor:
         # カメラ映像の取得
         ret, im = cap.read()
         im = trans.transform_camera(im, M=cM)
         if save_movie is not None:
             save_movie.write(cv2.resize(im, (1920, 1080)))
-
         # トリガー検出
-        win_player = check_tile(field_points, im, size)
-        if win_player > -1:
-            print('check')
-            break
-
-        # カメラ映像の表示
-        im = draw.draw_rect2(field_points, size, im)
-        im = draw.draw_riichi2(field_points, im, size)
-        cv2.imshow("Camera", cv2.resize(im, (1920, 1080)))
+        trigger = executor.submit(check_tile, field_points, img, size)
 
         # 立直判定
-        if sum(isRiichi) < len(isRiichi):
-            riichi_images = []
-            for i in range(4-is_sanma):
-                riichi_images.append(get.get_riichi(field_points, i, im))
-            riichi_evals = eval.multi_riichi_eval(riichi_images)
-            for i, riichi_eval in enumerate(riichi_evals):
-                if riichi_eval == 1 and not isRiichi[i]:
-                    r_count[i] += 1
-                    # 立直判定が一定数以上の場合，立直を宣言
-                    if r_count[i] > r_max:
-                        # 初めての立直の場合，立直の音楽を再生
-                        if r_video is None:
-                            music.stop_music()
-                            r_video = cv2.VideoCapture(RIICHI_VIDEO)
-                            speed *= 2
-                        # リーチ演出の再生
-                        music.play_se(RIICHI_SE[0])
-                        isRiichi[i] = True
-                        # 立直の場合，点数を減らす
-                        player_points[i] -= 1000
-                    else:
-                        isRiichi[i] = False
-                elif not isRiichi[i]:
-                    r_count[i] = 0
-
-        # 背景動画の投影
-        img = draw.loop_movie(field_points, video, size, ton_player, reduction=reduction, speed=speed)
-
-        # 立直演出
+        riichi_images = []
         for i in range(4-is_sanma):
-            if isRiichi[i] and r_count[i] > r_max:
-                tmp_img = draw.back_place(r_video, img, field_points, i, time=r_frame[i], reduction=reduction,skelton=True)
-                r_frame[i] += 3
-                if tmp_img is None:
-                    if not (-1 in r_count):
-                        music.loop_music(RIICHI_BGM[rand])
-                    r_count[i] = -1
-                else:
-                    img = tmp_img
+            riichi_images.append(get.get_riichi(field_points, i, im))
+        riichi_process = executor.submit(eval.multi_riichi_eval, riichi_images)
 
-        # トリガー動画の投影
-        img = draw.draw_rect_movie(field_points, trigger, size, img=img, reduction=reduction)
-        # 情報の投影
-        img = draw.draw_riichi(field_points, img=img, reduction=reduction)
-        img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction,is_sanma=is_sanma)
-        img = draw.draw_honba(field_points, ton_player, round_wind, honba, kyotaku+sum(isRiichi),img=img, reduction=reduction)
-        img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
-        if effect is not None:
-            effect.write(cv2.resize(img, (1920, 1080)))
-        show_img(img, m, field_points, M=sM, reduction=reduction)
-        c = cv2.waitKey(1)
 
-        # 流局
-        if c == ord('q'):
-            music.stop_music()
-            music.play_se(RYOUKYOKU_SE)
-            return -1, isRiichi
-        elif c == ord('p'):
-            music.stop_music()
-            music.play_se(RYOUKYOKU_SE)
-            return -2 , isRiichi
+        while (cap.isOpened()):
+            # カメラ映像の取得
+            ret, im = cap.read()
+            im = trans.transform_camera(im, M=cM)
+            if save_movie is not None:
+                save_movie.write(cv2.resize(im, (1920, 1080)))
+
+            # カメラ映像の表示
+            im = draw.draw_rect2(field_points, size, im)
+            im = draw.draw_riichi2(field_points, im, size)
+            cv2.imshow("Camera", cv2.resize(im, (1920, 1080)))
+
+            # トリガー検出
+            if trigger.done():
+                win_player = trigger.result()
+                if win_player > -1:
+                    print('check')
+                    break
+                trigger = executor.submit(check_tile, field_points, im, size)
+            
+
+            # 立直判定
+            if sum(isRiichi) < len(isRiichi):
+                if riichi_process.done():
+                    riichi_evals = riichi_process.result()
+                    for i, riichi_eval in enumerate(riichi_evals):
+                        if riichi_eval == 1 and not isRiichi[i]:
+                            r_count[i] += 1
+                            # 立直判定が一定数以上の場合，立直を宣言
+                            if r_count[i] > r_max:
+                                # 初めての立直の場合，立直の音楽を再生
+                                if r_video is None:
+                                    music.stop_music()
+                                    r_video = cv2.VideoCapture(RIICHI_VIDEO)
+                                    speed *= 2
+                                # リーチ演出の再生
+                                music.play_se(RIICHI_SE[0])
+                                isRiichi[i] = True
+                                # 立直の場合，点数を減らす
+                                player_points[i] -= 1000
+                            else:
+                                isRiichi[i] = False
+                        elif not isRiichi[i]:
+                            r_count[i] = 0
+                    if sum(isRiichi) < len(isRiichi):
+                        riichi_images = []
+                        for i in range(4-is_sanma):
+                            riichi_images.append(get.get_riichi(field_points, i, im))
+                        riichi_process = executor.submit(eval.multi_riichi_eval, riichi_images)
+
+            # 背景動画の投影
+            img = draw.loop_movie(field_points, video, size, ton_player, reduction=reduction, speed=speed)
+
+            # 立直演出
+            for i in range(4-is_sanma):
+                if isRiichi[i] and r_count[i] > r_max:
+                    tmp_img = draw.back_place(r_video, img, field_points, i, time=r_frame[i], reduction=reduction,skelton=True)
+                    r_frame[i] += 3
+                    if tmp_img is None:
+                        if not (-1 in r_count):
+                            music.loop_music(RIICHI_BGM[rand])
+                        r_count[i] = -1
+                    else:
+                        img = tmp_img
+
+            # トリガー動画の投影
+            img = draw.draw_rect_movie(field_points, trigger, size, img=img, reduction=reduction)
+            # 情報の投影
+            img = draw.draw_riichi(field_points, img=img, reduction=reduction)
+            img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction,is_sanma=is_sanma)
+            img = draw.draw_honba(field_points, ton_player, round_wind, honba, kyotaku+sum(isRiichi),img=img, reduction=reduction)
+            img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
+            if effect is not None:
+                effect.write(cv2.resize(img, (1920, 1080)))
+            show_img(img, m, field_points, M=sM, reduction=reduction)
+            c = cv2.waitKey(1)
+
+            # 流局
+            if c == ord('q'):
+                music.stop_music()
+                music.play_se(RYOUKYOKU_SE)
+                return -1, isRiichi
+            elif c == ord('p'):
+                music.stop_music()
+                music.play_se(RYOUKYOKU_SE)
+                return -2 , isRiichi
 
     return win_player, isRiichi
 
