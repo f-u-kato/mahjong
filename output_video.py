@@ -211,12 +211,12 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
         if save_movie is not None:
             save_movie.write(cv2.resize(im, (1920, 1080)))
         # トリガー検出
-        trigger = executor.submit(check_tile, field_points, img, size)
+        trigger = executor.submit(check_tile, field_points, im.copy(), size)
 
         # 立直判定
         riichi_images = []
         for i in range(4-is_sanma):
-            riichi_images.append(get.get_riichi(field_points, i, im))
+            riichi_images.append(get.get_riichi(field_points, i, im.copy()))
         riichi_process = executor.submit(eval.multi_riichi_eval, riichi_images)
 
 
@@ -228,9 +228,9 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
                 save_movie.write(cv2.resize(im, (1920, 1080)))
 
             # カメラ映像の表示
-            im = draw.draw_rect2(field_points, size, im)
-            im = draw.draw_riichi2(field_points, im, size)
-            cv2.imshow("Camera", cv2.resize(im, (1920, 1080)))
+            out_im = draw.draw_rect2(field_points, size, im)
+            out_im = draw.draw_riichi2(field_points, out_im, size)
+            cv2.imshow("Camera", cv2.resize(out_im, (1920, 1080)))
 
             # トリガー検出
             if trigger.done():
