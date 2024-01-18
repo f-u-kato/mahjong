@@ -234,7 +234,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
 
             # トリガー検出
             if trigger_process.done():
-                win_player = trigger.result()
+                win_player = trigger_process.result()
                 if win_player > -1:
                     print('check')
                     break
