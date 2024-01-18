@@ -1,4 +1,5 @@
 import pygame
+import re
 
 YAKU_PATH = "./music/yaku/"
 YAKU_FILES = {
@@ -26,7 +27,7 @@ YAKU_FILES = {
     "Pinfu": "ピンフ.wav",
     "Renhou": "レンホウ.wav",
     "Riichi": "リーチ.wav",
-    "Rinshan": "リンシャンカイホウ.wav",
+    "RinshanKaihou": "リンシャンカイホウ.wav",
     "Ryanpeikou": "リャンペーコー.wav",
     "Sanankou": "サンアンコー.wav",
     "SanKantsu": "サンカンツ.wav",
@@ -36,12 +37,7 @@ YAKU_FILES = {
     "Tanyao": "タンヤオ.wav",
     "Toitoi": "トイトイ.wav",
     "Tsumo": "ツモ.wav",
-    # "YakuhaiEast": "ヤクハイ.wav", # この項目は質問には含まれていない
-    # "YakuhaiNorth": "ヤクハイ.wav", # この項目は質問には含まれていない
-    # "YakuhaiOfPlace": "ヤクハイ.wav", # この項目は質問には含まれていない
-    # "YakuhaiOfRound": "ヤクハイ.wav", # この項目は質問には含まれていない
-    # "YakuhaiSouth": "ヤクハイ.wav", # この項目は質問には含まれていない
-    # "YakuhaiWest": "ヤクハイ.wav", # この項目は質問には含まれていない
+    "Yakuhai": "ヤクハイ.wav",
 }
 
 def loop_music(path):
@@ -84,7 +80,12 @@ def unpause_music():
 def start_yaku_voice(yaku_list):
     if pygame.mixer.get_busy():
         return yaku_list
-    else:
+    elif yaku_list != []:
         yaku = yaku_list.pop()
+        if "Dora" in yaku.name:
+            for _ in range(int(yaku.han_closed)-1):
+                yaku.han_closed = 1
+                yaku_list.append(yaku)
+        yaku = yaku.name
         play_se(YAKU_PATH + YAKU_FILES[yaku])
         return yaku_list

@@ -398,29 +398,35 @@ def mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,wi
 
 
 def test_result():
-    #アガリ形(赤ドラは0,またはrを用いる(並び順はなんでもOK), has_aka_dora=Trueに変更)
-    tiles = TilesConverter.string_to_136_array(man='022246', pin='333', sou='33567', has_aka_dora=True)
+    #アガリ形(honors=1:東, 2:南, 3:西, 4:北, 5:白, 6:發, 7:中)
+    tiles = TilesConverter.string_to_136_array(man='677889', pin='88', sou='456', honors='222')
 
-    #アガリ牌(マンズの6)
-    win_tile = TilesConverter.string_to_136_array(man='6')[0]
+    #アガリ牌(マンズの8)
+    win_tile = TilesConverter.string_to_136_array(man='8')[0]
 
-    #鳴き(チー:CHI, ポン:PON, カン:KAN(True:ミンカン,False:アンカン), カカン:CHANKAN, ヌキドラ:NUKI)
-    melds = [
-        Meld(Meld.KAN, TilesConverter.string_to_136_array(man='2222'), False),
-        Meld(Meld.PON, TilesConverter.string_to_136_array(pin='333')),
-        Meld(Meld.CHI, TilesConverter.string_to_136_array(sou='567'))
+    #鳴き(なし)
+    melds = None
+
+    #ドラ(表示牌,裏ドラ)
+    dora_indicators = [
+        TilesConverter.string_to_136_array(pin='7')[0],
+        TilesConverter.string_to_136_array(sou='9')[0],
     ]
 
-    #ドラ(なし)
-    dora_indicators = None
-
-    #オプション(ツモ, リンシャンカイホウ, 喰いタン・赤ドラルールを追加)
-    config = HandConfig(is_tsumo=True,is_rinshan=True, options=OptionalRules(has_open_tanyao=True, has_aka_dora=True))
-
+    #オプション(リーチ, 自風, 場風)
+    config = HandConfig(is_riichi=True, player_wind=EAST, round_wind=EAST)
 
     #計算
-    result = calculator.estimate_hand_value(tiles, win_tile, melds, dora_indicators, config)
+    result = calculator.estimate_hand_value(tiles, win_tile,melds,dora_indicators, config)
     return result
-
+import re
 if __name__=='__main__':
-    print(test_result())
+    print(test_result().yaku)
+    yaku_list=test_result().yaku
+    
+    while(yaku_list!=[]):
+        num=0
+        yaku = yaku_list.pop()
+        if "Dora" in yaku.name:
+            num = yaku.han_closed
+        yaku = yaku.name
