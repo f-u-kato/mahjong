@@ -38,7 +38,28 @@ YAKU_FILES = {
     "Toitoi": "トイトイ.wav",
     "Tsumo": "ツモ.wav",
     "Yakuhai": "ヤクハイ.wav",
-    "MenzenTsumo":"メンゼンツモ.wav"
+    "MenzenTsumo":"メンゼンツモ.wav",
+    "Chiihou": "チーホウ.wav",
+    "Chinroutou": "チンロウトウ.wav",
+    "ChuurenPoutou": "チュウレンポウトウ.wav",
+    "DaburuChuurenPoutou": "ダブルチュウレンポウトウ.wav",
+    "DaburuKokushiMusou": "ダブルコクシムソウ.wav",
+    "Daichisei": "ダイチセイ.wav",
+    "Daisangen": "ダイサンゲン.wav",
+    "Daisharin": "ダイシャリン.wav",
+    "DaiSuushii": "ダイスウシー.wav",
+    "KokushiMusou": "コクシムソウ.wav",
+    "Paarenchan": "パーレンチャン.wav",
+    "RenhouYakuman": "レンホウヤクマン.wav",
+    "Ryuuiisou": "リュウイーソウ.wav",
+    "Sashikomi": "サシコミ.wav",
+    "Shousuushii": "ショウスーシー.wav",
+    "Suuankou": "スーアンコウ.wav",
+    "SuuankouTanki": "スーアンコウタンキ.wav",
+    "Suukantsu": "スーカンツ.wav",
+    "Tenhou": "テンホウ.wav",
+    "Tsuuiisou": "ツウイーソウ.wav",
+    
 }
 
 def loop_music(path):
