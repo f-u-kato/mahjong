@@ -708,23 +708,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             _ = show_img(img, m, field_points, dst=dst, reduction=reduction)
             cv2.waitKey(1)
 
-            # 役満などの表示
-            if agari != -1:
-                img = draw.draw_agari(agari, field_points, win_player, size, reduction=reduction)
-                img = draw.draw_result(result, field_points, win_player, size, img, reduction=reduction)
-                img = draw.draw_hand(field_points, hand_classes, hand_boxes, win_player, size, img, reduction=reduction)
-                img = draw.draw_dora(field_points, dora_classes, dora_boxes, win_player, size, img, reduction=reduction)
-                img = draw.draw_naki(field_points, naki_classes, naki_boxes, win_player, size, img, reduction=reduction)
-                img = draw.draw_wintile(field_points, win_class, win_box, lose_player, size, img, reduction=reduction)
-                img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction, is_sanma=is_sanma)
-                img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
-                time.sleep(1)
-                if agari == 4:
-                    time.sleep(1)
-                music.play_music(AGARI_SE[int(agari//3)])
-
-                _ = show_img(img, m, field_points, dst=dst, reduction=reduction)
-
+            yaku_list = result.yaku
             while (1):
                 ret, im = cap.read()
                 im = trans.transform_camera(im, M=cM)
@@ -734,7 +718,18 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
                     effect.write(cv2.resize(img, (1920, 1080)))
                 cv2.imshow("Camera", cv2.resize(im, (1920, 1080)))
                 c = cv2.waitKey(1)
-
+                
+                # 役の読み上げ
+                if yaku_list != 0:
+                    yaku_list=music.start_yaku_voice(yaku_list)
+                # 役満等の表示
+                elif agari != -1:
+                    img = draw.draw_agari(agari, field_points, win_player, size, img, reduction=reduction)
+                    music.play_music(AGARI_SE[int(agari//3)])
+                    _ = show_img(img, m, field_points, dst=dst, reduction=reduction)
+                    agari=-1
+                    
+                
                 # 終了
                 if c == ord('q'):
                     isRead = False

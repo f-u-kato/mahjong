@@ -86,6 +86,6 @@ def start_yaku_voice(yaku_list):
             for _ in range(int(yaku.han_closed)-1):
                 yaku.han_closed = 1
                 yaku_list.append(yaku)
-        yaku = yaku.name
-        play_se(YAKU_PATH + YAKU_FILES[yaku])
+        play_se(YAKU_PATH + YAKU_FILES[yaku.name])
         return yaku_list
+    return []
