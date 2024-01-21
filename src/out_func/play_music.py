@@ -38,6 +38,7 @@ YAKU_FILES = {
     "Toitoi": "トイトイ.wav",
     "Tsumo": "ツモ.wav",
     "Yakuhai": "ヤクハイ.wav",
+    "MenzenTsumo":"メンゼンツモ.wav"
 }
 
 def loop_music(path):
@@ -82,10 +83,13 @@ def start_yaku_voice(yaku_list):
         return yaku_list
     elif yaku_list != []:
         yaku = yaku_list.pop()
+
         if "Dora" in yaku.name:
             for _ in range(int(yaku.han_closed)-1):
                 yaku.han_closed = 1
                 yaku_list.append(yaku)
-        play_se(YAKU_PATH + YAKU_FILES[yaku.name])
+        yaku_name = re.sub("\(.*\)","",yaku.name)
+        yaku_name = yaku_name.replace(" ","")
+        play_se(YAKU_PATH + YAKU_FILES[yaku_name])
         return yaku_list
-    return []
+    return 0

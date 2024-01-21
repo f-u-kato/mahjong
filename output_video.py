@@ -11,6 +11,7 @@ import datetime
 import pandas as pd
 import os
 import glob
+import pygame
 
 import src.out_func.draw_img as draw
 import src.eval.mahjong_eval as eval
@@ -723,7 +724,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
                 if yaku_list != 0:
                     yaku_list=music.start_yaku_voice(yaku_list)
                 # 役満等の表示
-                elif agari != -1:
+                elif agari != -1 and not pygame.mixer.get_busy():
                     img = draw.draw_agari(agari, field_points, win_player, size, img, reduction=reduction)
                     music.play_music(AGARI_SE[int(agari//3)])
                     _ = show_img(img, m, field_points, dst=dst, reduction=reduction)
