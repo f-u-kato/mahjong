@@ -229,7 +229,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
     isRiichi = [False, False, False, False]
     # 立直判定のカウント
     r_count = [0, 0, 0, 0]
-    r_max = 5
+    r_max = 2
     r_video = None
     r_frame = [0, 0, 0, 0]
     # 動画の再生速度
@@ -333,7 +333,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
                         img = tmp_img
 
             # トリガー動画の投影
-            img = draw.draw_rect_movie(field_points, trigger, size, img=img, reduction=reduction)
+            img = draw.draw_rect_movie(field_points, trigger, size, img=img, reduction=reduction, is_sanma=is_sanma)
             # 情報の投影
             img = draw.draw_riichi(field_points, img=img, reduction=reduction)
             img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction,is_sanma=is_sanma)

@@ -376,16 +376,19 @@ def mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,wi
         if is_sanma:
             print(result.han)
             result.han+=nuki_dora 
-            if sanma_options[0]:
-                result.fu = 0
             scores_calculator = ScoresCalculator()
             print("after",result.han)
+            if sanma_options[0]:
+                result.fu = 30
             result.cost = scores_calculator.calculate_scores(result.han, result.fu, config, len(result.yaku) > 0)
             print(result.cost)
             if sanma_options[1]:
                 add_cost=result.cost["additional"]//2
                 result.cost["main"]+=add_cost
                 result.cost["additional"]+=add_cost
+            if sanma_options[0]:
+                result.cost["main"]=round(result.cost["main"],-3)
+                result.cost["additional"]=round(result.cost["additional"],-3)
         #本場計算
         if is_tsumo:
             result.cost['additional']+=100*honba
