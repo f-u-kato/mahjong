@@ -146,19 +146,61 @@ def toggle_spinbox(spinbox,is_check):
         spinbox.configure(text_color='black')  # spinboxを有効にする
 
 def setting_window():
-    # ウィンドウを作成
     app = ctk.CTk()
     app.geometry("800x500")
     app.title('麻雀の設定')
+
+    # スコア設定の下の部分に符計算とツモ損の設定を追加する関数
+    def add_sanma_options():
+        # 既にオプションが存在していれば何もしない
+        if hasattr(app, 'sanma_option_frame'):
+            return
+        
+        # トグルボタンの値を保持する変数
+        app.fu_calculation = tk.BooleanVar(value=False)
+        app.tsumo_loss = tk.BooleanVar(value=False)
+        
+        # トグルボタンを配置するフレームを作成
+        app.sanma_option_frame = ctk.CTkFrame(app)
+        app.sanma_option_frame.pack(side="top", anchor="n", pady=10)
+        
+        # 「符計算なし」のトグルボタンを作成・配置
+        ctk.CTkSwitch(app.sanma_option_frame, text="符計算なし", variable=app.fu_calculation, onvalue=True, offvalue=False).pack(side="left", padx=10)
+        # 「ツモ損あり」のトグルボタンを作成・配置
+        ctk.CTkSwitch(app.sanma_option_frame, text="ツモ損なし", variable=app.tsumo_loss, onvalue=True, offvalue=False).pack(side="left", padx=10)
+
+    # オプションを削除する関数
+    def remove_sanma_options():
+        if hasattr(app, 'sanma_option_frame'):
+            app.sanma_option_frame.pack_forget()  # フレームをパックから解除
+            app.sanma_option_frame.destroy()      # フレームを破棄
+            del app.sanma_option_frame            # オブジェクトの属性を削除
+
+    # 東南モードが変更された時に呼ばれる関数
+    def on_mode_change():
+        # is_sanmaがTrueの場合、追加オプションを表示
+        if mode_type.get() > 1:
+            add_sanma_options()
+        else:
+            # 三人麻雀でない場合、オプションを削除する
+            remove_sanma_options()
+
+
+    # スピンボックスの有効/無効を切り替える関数
+    def toggle_spinbox(spinbox, check_var):
+        if check_var.get() == 0:
+            spinbox.set(0)
+            spinbox.configure(state='disabled')
+        else:
+            spinbox.configure(state='normal')
 
     # ラジオボタン
     mode_type = tk.IntVar(value=0)
     radio_frame = ctk.CTkFrame(app)
     radio_frame.pack(side="top", anchor="n", pady=20) 
-    ctk.CTkRadioButton(radio_frame, text="四人東", variable=mode_type, value=0).pack(side="left", padx=10)
-    ctk.CTkRadioButton(radio_frame, text="四人南", variable=mode_type, value=1).pack(side="left", padx=10)
-    ctk.CTkRadioButton(radio_frame, text="三人東", variable=mode_type, value=2).pack(side="left", padx=10)
-    ctk.CTkRadioButton(radio_frame, text="三人南", variable=mode_type, value=3).pack(side="left", padx=10)
+    # モード変更時のコマンドを追加してラジオボタンを作成
+    for text, value in [("四人東", 0), ("四人南", 1), ("三人東", 2), ("三人南", 3)]:
+        ctk.CTkRadioButton(radio_frame, text=text, variable=mode_type, value=value, command=on_mode_change).pack(side="left", padx=10)
 
     # スコア設定
     score_frame = ctk.CTkFrame(app)
@@ -169,14 +211,18 @@ def setting_window():
     is_check=tk.IntVar(value=1)
     ctk.CTkCheckBox(score_frame, text="設定しない", variable=is_check, onvalue=0, offvalue=1, command=lambda:toggle_spinbox(end_score,is_check)).pack(side="left", padx=10)
 
-    # スタートボタンの作成と配置
-    ctk.CTkButton(app, text="スタート", command=app.destroy).pack(side="right", anchor="n", padx=80, pady=50) 
 
-    app.mainloop() 
+    # スタートボタンの作成と配置
+    ctk.CTkButton(app, text="スタート", command=lambda: app.destroy()).pack(side="right", anchor="n", padx=80, pady=50)
+
+    app.mainloop()
 
     is_sanma = mode_type.get() > 1
     is_tonpu = mode_type.get() % 2 == 0
-    return is_sanma, is_tonpu, end_score.get()*is_check.get()
+    score = end_score.get() if is_check.get() else 0
+    sanma_options_result = [app.fu_calculation.get(), app.tsumo_loss.get()] if is_sanma else [None, None]
+
+    return is_sanma, is_tonpu, score, sanma_options_result
 
 def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, kyotaku, dst, player_points, reduction=1, save_movie=None, effect=None, is_sanma=False):
     # 立直の判定
@@ -546,7 +592,7 @@ def draw_movie(field_points, size, m, cap, win_player, cM, agari, dst, min_size=
     return
 
 
-def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points, min_size=(540, 960, 3), save_time=None, round_wind=0, honba=0, kyotaku=0, save_movie=None, effect=None, is_sanma=False, is_tonpu=False):
+def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points, min_size=(540, 960, 3), save_time=None, round_wind=0, honba=0, kyotaku=0, save_movie=None, effect=None, is_sanma=False, is_tonpu=False, sanma_options=[None,None]):
     # 表示倍率
     reduction = size[0]/min_size[0]
 
@@ -677,7 +723,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             is_tsumo = win_player == lose_player
             # 点数計算
             result = mahjong_calculation.mahjong_auto(hand_classes, naki_classes, naki_boxes, dora_classes, dora_boxes, win_class, win_box, get_wind(
-                win_player, ton_player), round_wind=round_wind, honba=honba, is_tsumo=is_tsumo, is_sanma=is_sanma, is_riichi=isRiichi[win_player])
+                win_player, ton_player), round_wind=round_wind, honba=honba, is_tsumo=is_tsumo, is_sanma=is_sanma, is_riichi=isRiichi[win_player], sanma_options=sanma_options)
 
             # 点数計算失敗
             draw_flag = True
@@ -870,7 +916,7 @@ def main():
     kyotaku = 0
     
     # ゲーム開始前の設定
-    is_sanma, is_tonpu, end_point = setting_window()
+    is_sanma, is_tonpu, end_point, sanma_options = setting_window()
     is_over = False
     if is_sanma:
         player_points = [35000, 35000, 35000]
@@ -880,7 +926,7 @@ def main():
         while (ton_player < 4 - is_sanma and isContinue):
             # 局の開始
             win_result, time_df, isContinue, kyotaku = mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
-                                                           save_time=time_df, round_wind=round_wind, honba=honba, kyotaku=kyotaku, save_movie=save_movie, effect=effect, is_sanma=is_sanma)
+                                                           save_time=time_df, round_wind=round_wind, honba=honba, kyotaku=kyotaku, save_movie=save_movie, effect=effect, is_sanma=is_sanma, sanma_options=sanma_options, is_tonpu=is_tonpu)
             # 親の変更
             if win_result > 0:
                 ton_player += 1

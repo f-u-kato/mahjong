@@ -358,7 +358,7 @@ def mahjong_win(win_class,box):
     return win_tile,has_aka_dora,is_rinshan
 
 
-def mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,win_class,win_box,player_wind,round_wind=0,honba=0,is_tsumo=False,is_sanma=False, is_riichi=False):
+def mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,win_class,win_box,player_wind,round_wind=0,honba=0,is_tsumo=False,is_sanma=False, is_riichi=False, sanma_options=None):
     player_wind=WIND_CLASSES[player_wind]
     round_wind=WIND_CLASSES[round_wind]
     melds,naki_aka,add_tiles=mahjong_naki(naki_classes,naki_boxes)
@@ -376,13 +376,16 @@ def mahjong_auto(hand_classes,naki_classes,naki_boxes,dora_classes,dora_boxes,wi
         if is_sanma:
             print(result.han)
             result.han+=nuki_dora 
+            if sanma_options[0]:
+                result.fu = 0
             scores_calculator = ScoresCalculator()
             print("after",result.han)
             result.cost = scores_calculator.calculate_scores(result.han, result.fu, config, len(result.yaku) > 0)
             print(result.cost)
-            add_cost=result.cost["additional"]//2
-            result.cost["main"]+=add_cost
-            result.cost["additional"]+=add_cost
+            if sanma_options[1]:
+                add_cost=result.cost["additional"]//2
+                result.cost["main"]+=add_cost
+                result.cost["additional"]+=add_cost
         #本場計算
         if is_tsumo:
             result.cost['additional']+=100*honba
