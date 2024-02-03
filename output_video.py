@@ -12,6 +12,7 @@ import pandas as pd
 import os
 import glob
 import pygame
+import re
 
 import src.out_func.draw_img as draw
 import src.eval.mahjong_eval as eval
@@ -131,6 +132,38 @@ def show_img(img, size_data=None, field_points=None, dst=None, M=None, reduction
         cv2.resizeWindow("Projector Output", size_data.width, size_data.height)
 
 
+def create_new_filename(base_path, filename, extension):
+    # ファイルのリストを取得
+    files = os.listdir(base_path)
+    
+    # ファイル名のパターンを作成（例：'file' + 数字 + '.txt'）
+    pattern = f"^{re.escape(filename)}(\\d+){re.escape(extension)}$"
+    
+    # 最大の番号を探す
+    max_number = -1
+    for file in files:
+        match = re.match(pattern, file)
+        if match:
+            number = int(match.group(1))
+            if number > max_number:
+                max_number = number
+    
+    # 新しいファイル名を作成（存在しない場合は0を使用）
+    new_number = max_number + 1
+    new_filename = f"{base_path}/{filename}{new_number}{extension}"
+    
+    return new_filename
+
+def save_video(camera, name):
+    os.makedirs(os.path.dirname(name), exist_ok=True)
+    name = create_new_filename(os.path.dirname(name), os.path.basename(name), '.mp4')
+    print(name)
+    fps = int(camera.get(cv2.CAP_PROP_FPS))                    # カメラのFPSを取得
+    w = int(1920)              # カメラの横幅を取得
+    h = int(1080)             # カメラの縦幅を取得
+    fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')        # 動画保存時のfourcc設定（mp4用）
+    video = cv2.VideoWriter(name, fourcc, fps, (w, h))  # 動画の仕様（ファイル名、fourcc, FPS, サイズ）
+    return video
 
 def toggle_spinbox(spinbox,is_check):
     if is_check.get() == 1:  # チェックボックスがチェックされていない場合
@@ -217,7 +250,10 @@ def setting_window():
 
     return is_sanma, is_tonpu, score, sanma_options_result
 
-def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, kyotaku, dst, player_points, reduction=1, is_sanma=False):
+def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, kyotaku, dst, player_points, reduction=1, save_movie=None, effect=None, is_sanma=False):
+    # 動画保存
+    effect = save_video(cap, './save_movie/trigger/effect')
+    save_movie = save_video(cap, './save_movie/trigger/camera')
     # 立直の判定
     isRiichi = [False, False, False, False]
     # 立直判定のカウント
@@ -335,18 +371,24 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
             if c == ord('q'):
                 music.stop_music()
                 music.play_se(RYOUKYOKU_SE)
-                return -1, isRiichi
+                win_player = -1
+                break
             elif c == ord('p'):
                 music.stop_music()
                 music.play_se(RYOUKYOKU_SE)
-                return -2 , isRiichi
-
+                win_player = -2
+                break
+    effect.release()
+    save_movie.release()
     return win_player, isRiichi
 
 # 上がり牌配置領域に牌がなくなるまで待機
 def wait_no_wintile(field_points, win_player, size, dst, cap, cM, m, im=None, reduction=1, is_sanma=False):
     img = draw.draw_player_rect(field_points, win_player, size, first=True, img=im, reduction=reduction, is_sanma=is_sanma)
     show_img(img, m, field_points, dst=dst, reduction=reduction)
+    # 動画保存
+    effect = save_video(cap, './save_movie/wait/effect')
+    save_movie = save_video(cap, './save_movie/wait/camera')
     while (cap.isOpened()):
         ret, im = cap.read()
         im = trans.transform_camera(im, M=cM)
@@ -360,9 +402,14 @@ def wait_no_wintile(field_points, win_player, size, dst, cap, cM, m, im=None, re
         if cv2.waitKey(1) & 0xFF == ord('q'):
             music.stop_music()
             break
+    effect.release()
+    save_movie.release()
 
 # 上がり牌のチェック
-def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is_eval_draw=True, reduction=1, is_sanma=False):
+def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is_eval_draw=True, reduction=1, save_movie=None, effect=None, is_sanma=False):
+    # 動画保存
+    effect = save_video(cap, './save_movie/wintile/effect')
+    save_movie = save_video(cap, './save_movie/wintile/camera')
     # SEの再生
     music.stop_music()
     music.play_se(TRIGGER_SE[random.randint(0, len(TRIGGER_SE)-1)])
@@ -379,8 +426,15 @@ def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is
     while (cap.isOpened()):
         # 牌の表示を消す
         show_img(def_img, m, field_points, M=sM, reduction=reduction)
+
         # 取得映像から牌表示がなくなるまで待機
         for i in range(500):
+            ret, im = cap.read()
+            im = trans.transform_camera(im, M=cM)
+            if save_movie is not None:
+                save_movie.write(cv2.resize(im, (1920, 1080)))
+            if effect is not None:
+                effect.write(cv2.resize(def_img, (1920, 1080)))
             if isFirst:
                 isFirst = False
                 break
@@ -392,10 +446,14 @@ def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is
         # 再び検出牌を表示
         show_img(img, m, field_points, M=sM, reduction=reduction)
         cv2.waitKey(1)
+        if effect is not None:
+            effect.write(cv2.resize(img, (1920, 1080)))
 
         # カメラ映像の取得
         ret, im = cap.read()
         im = trans.transform_camera(im, M=cM)
+        if save_movie is not None:
+            save_movie.write(cv2.resize(im, (1920, 1080)))
         new_im = im.copy()
         new_im = draw.draw_player_rect2(field_points, win_player, size, new_im)
         cv2.imshow("Camera", cv2.resize(new_im, (1920, 1080)))
@@ -433,9 +491,14 @@ def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is
         # 点数計算をスキップしたい場合
         if c == ord('p'):
             return -2, -2, 0
+    effect.release()
+    save_movie.release()
     return win_class, win_box, lose_player
 
-def ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, reduction=1, is_sanma=False):
+def ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, reduction=1, save_movie=None, effect=None, is_sanma=False):
+    # 動画保存
+    effect = save_video(cap, './save_movie/ryukyoku/effect')
+    save_movie = save_video(cap, './save_movie/ryukyoku/camera')
     music.stop_music()
     img = draw.draw_kaze(field_points, ton_player, reduction=reduction, is_sanma=is_sanma)
     img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
@@ -445,6 +508,8 @@ def ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, red
 
     # 投影変換の計算
     sM = show_img(img, m, field_points, dst=dst, reduction=reduction)
+    if effect is not None:
+        effect.write(cv2.resize(img, (1920, 1080)))
 
     # 流局の判定
     is_tenpai = [False, False, False, False]
@@ -456,6 +521,8 @@ def ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, red
         # カメラ映像の取得
         ret, im = cap.read()
         im = trans.transform_camera(im, M=cM)
+        if save_movie is not None:
+            save_movie.write(cv2.resize(im, (1920, 1080)))
         # カメラ映像の表示
         cv2.imshow("Camera", cv2.resize(im, (1920, 1080)))
 
@@ -492,6 +559,8 @@ def ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, red
                 else:
                     t_count[i] = 0
         # 間違えていた場合，戻る
+        if effect is not None:
+            effect.write(cv2.resize(img, (1920, 1080)))
         c = cv2.waitKey(1)
         if skip_count<50:
             skip_count+=1
@@ -513,8 +582,10 @@ def ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, red
     return player_points, not is_tenpai[ton_player]
             
 
-def draw_movie(field_points, size, m, cap, win_player, cM, agari, dst, min_size=(540, 960, 3)):
-
+def draw_movie(field_points, size, m, cap, win_player, cM, agari, dst, min_size=(540, 960, 3), save_movie=None, effect=None):
+    # 動画保存
+    effect = save_video(cap, './save_movie/draw/effect')
+    save_movie = save_video(cap, './save_movie/draw/camera')
     reduction = size[0]/min_size[0]
     min_field = field_points
     img = np.zeros(min_size, np.uint8)
@@ -537,6 +608,8 @@ def draw_movie(field_points, size, m, cap, win_player, cM, agari, dst, min_size=
             c = cv2.waitKey(1)
             count += 2
             if c == ord('q'):
+                effect.release()
+                save_movie.release()
                 video.release()
                 return
     # 役満の場合
@@ -560,15 +633,18 @@ def draw_movie(field_points, size, m, cap, win_player, cM, agari, dst, min_size=
                 count += 3
                 c = cv2.waitKey(1)
                 if c == ord('q'):
+                    effect.release()
+                    save_movie.release()
                     video.release()
                     return
             video.release()
-
+    effect.release()
+    save_movie.release()
     video.release()
     return
 
 
-def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points, min_size=(540, 960, 3), save_time=None, round_wind=0, honba=0, kyotaku=0, is_sanma=False, sanma_options=[None,None]):
+def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points, min_size=(540, 960, 3), save_time=None, round_wind=0, honba=0, kyotaku=0, is_sanma=False, is_tonpu=False, sanma_options=[None,None]):
     # 表示倍率
     reduction = size[0]/min_size[0]
 
@@ -586,6 +662,10 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
     dice_count = 0
     dice_rand = random.randint(20, 30)
     dice_number = [0, 0]
+    
+    # 動画保存
+    effect = save_video(cap, './save_movie/start/effect')
+    save_movie = save_video(cap, './save_movie/start/camera')
 
     # サイコロ
     while (1):
@@ -605,6 +685,12 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
         # 終了
         elif c == ord('p'):
             return 0, save_time, False, kyotaku
+
+    # 動画の保存終了
+    if save_movie is not None:
+        save_movie.release()
+    if effect is not None:
+        effect.release()
 
     isRead = True
     isRiichi = [False, False, False, False]
@@ -726,7 +812,9 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
             _ = show_img(img, m, field_points, dst=dst, reduction=reduction)
             cv2.waitKey(1)
-
+            # 動画保存
+            save_movie=save_video(cap, './save_movie/result/movie')
+            effect=save_video(cap, './save_movie/result/effect')
             yaku_list = result.yaku
             while (1):
                 ret, im = cap.read()
@@ -752,7 +840,10 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
                 # 点数間違い
                 if c == ord('p'):
                     break
-
+            if effect is not None:
+                effect.release()
+            if save_movie is not None:
+                save_movie.release()
     # 点数変更
     if is_tsumo:
         player_points[win_player] += result.cost['main']+result.cost['additional']*(2-is_sanma)
@@ -785,6 +876,10 @@ def main():
     cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
     cap.set(cv2.CAP_PROP_FOCUS, 0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
+
+    # 動画保存用設定
+    effect = save_video(cap, "./save_movie/setting/effect")
+    save_movie = save_video(cap, "./save_movie/setting/movie")
 
     # モデルを読み込んでおく
     _ = eval.trigger_eval(np.zeros([100, 100, 3], dtype=np.uint8))
@@ -861,6 +956,12 @@ def main():
             break
 
     cv2.destroyAllWindows()
+
+    # 動画の保存
+    if effect is not None:
+        effect.release()
+    if save_movie is not None:
+        save_movie.release()
 
     # 初期設定
     size = im.shape
