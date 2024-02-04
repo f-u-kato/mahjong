@@ -16,7 +16,7 @@ import src.get_func.get_area as area
 import src.get_func.get_img as get
 import src.eval.calculation as mahjong_calculation
 import src.out_func.play_music as music
-import output_video as ov
+import main as ov
 import src.out_func.transform_video as trans
 
 import concurrent.futures 
