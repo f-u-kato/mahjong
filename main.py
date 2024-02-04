@@ -131,13 +131,6 @@ def show_img(img, size_data=None, field_points=None, dst=None, M=None, reduction
         cv2.resizeWindow("Projector Output", size_data.width, size_data.height)
 
 
-
-def toggle_spinbox(spinbox,is_check):
-    if is_check.get() == 1:  # チェックボックスがチェックされていない場合
-        spinbox.configure(text_color='white')  # spinboxを無効にする
-    else:  # チェックボックスがチェックされている場合
-        spinbox.configure(text_color='black')  # spinboxを有効にする
-
 def setting_window():
     app = ctk.CTk()
     app.geometry("800x500")
@@ -180,12 +173,11 @@ def setting_window():
 
 
     # スピンボックスの有効/無効を切り替える関数
-    def toggle_spinbox(spinbox, check_var):
-        if check_var.get() == 0:
-            spinbox.set(0)
-            spinbox.configure(state='disabled')
-        else:
-            spinbox.configure(state='normal')
+    def toggle_spinbox(spinbox,is_check):
+        if is_check.get() == 1:  # チェックボックスがチェックされていない場合
+            spinbox.configure(text_color='white')  # spinboxを無効にする
+        else:  # チェックボックスがチェックされている場合
+            spinbox.configure(text_color='black')  # spinboxを有効にする
 
     # ラジオボタン
     mode_type = tk.IntVar(value=0)
