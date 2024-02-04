@@ -568,7 +568,7 @@ def draw_movie(field_points, size, m, cap, win_player, cM, agari, dst, min_size=
     return
 
 
-def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points, min_size=(540, 960, 3), save_time=None, round_wind=0, honba=0, kyotaku=0, is_sanma=False, sanma_options=[None,None]):
+def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points, min_size=(540, 960, 3), round_wind=0, honba=0, kyotaku=0, is_sanma=False, sanma_options=[None,None]):
     # 表示倍率
     reduction = size[0]/min_size[0]
 
@@ -604,7 +604,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             break
         # 終了
         elif c == ord('p'):
-            return 0, save_time, False, kyotaku
+            return 0, False, kyotaku
 
     isRead = True
     isRiichi = [False, False, False, False]
@@ -612,13 +612,12 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
         reduction = size[0]/min_size[0]
         # トリガー検出
         win_player,isRiichi = read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, kyotaku=kyotaku, dst=dst,
-                                  player_points=player_points, reduction=reduction, save_movie=save_movie, effect=effect, is_sanma=is_sanma)
+                                  player_points=player_points, reduction=reduction, is_sanma=is_sanma)
         # リーチ分を加算
         kyotaku+=sum(isRiichi)
-        st_time = time.time()
         # 流局
         if win_player < 0:
-            player_points, is_change = ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, reduction=reduction, save_movie=save_movie, effect=effect, is_sanma=is_sanma)
+            player_points, is_change = ryukyoku(cap, field_points, size, cM, ton_player, m, dst, player_points, reduction=reduction, is_sanma=is_sanma)
             # トリガー検出へ戻る
             if is_change == -1:
                 kyotaku-=sum(isRiichi)
@@ -626,7 +625,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
                     player_points[i] += 1000*isRiichi[i]
                 continue
             # 流局
-            return 2*is_change, save_time, True, kyotaku
+            return 2*is_change, True, kyotaku
 
         # 検出牌の表示用フラグ
         draw_flag = False
@@ -657,10 +656,9 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
             # 点数スキップ
             if win_class == -2:
                 if ton_player == win_player:
-                    return 0, save_time, True, 0
+                    return 0, True, 0
                 else:
-                    return 1, save_time, True, 0
-            sub_time = time.time()
+                    return 1, True, 0
 
             time.sleep(1)
             def_img = draw.draw_player_rect(field_points, win_player, size, reduction=reduction)
@@ -708,8 +706,6 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
                 music.play_music("./music/ビープ音1.mp3")
                 continue
 
-            en_time = time.time()
-            save_time = pd.concat([save_time, pd.Series([en_time-st_time, en_time-sub_time])], axis=1)
             agari = get.get_agari(result)
             # 演出表示
             if agari != -1:
@@ -770,14 +766,12 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
     player_points[win_player] += kyotaku*1000
     print(player_points)
     if ton_player == win_player:
-        return 0, save_time, True, 0
+        return 0, True, 0
     else:
-        return 1, save_time, True, 0
+        return 1, True, 0
 
 
 def main():
-    now = datetime.datetime.now()
-    time_df = pd.DataFrame()
 
     # カメラの設定
     m = get_monitors()[1]
@@ -881,8 +875,7 @@ def main():
     while (isContinue):
         while (ton_player < 4 - is_sanma and isContinue):
             # 局の開始
-            win_result, time_df, isContinue, kyotaku = mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
-                                                           save_time=time_df, round_wind=round_wind, honba=honba, kyotaku=kyotaku, is_sanma=is_sanma, sanma_options=sanma_options)
+            win_result, isContinue, kyotaku = mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points, round_wind=round_wind, honba=honba, kyotaku=kyotaku, is_sanma=is_sanma, sanma_options=sanma_options)
             # 親の変更
             if win_result > 0:
                 ton_player += 1
@@ -891,10 +884,9 @@ def main():
             if win_result == 1:
                 honba = 0
             # 飛んだ場合，終了
-            for i in range(4-is_sanma):
-                if player_points[i] < 0:
-                    isContinue = False
-                    break
+            if min(player_points) < 0:
+                isContinue = False
+                break
             if is_over and max(player_points) >= end_point:
                 isContinue = False
                 break
