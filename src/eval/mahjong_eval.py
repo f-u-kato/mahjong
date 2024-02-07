@@ -254,19 +254,18 @@ def multi_bbox_intersection_area(bboxes1, bbox2, classes1, class2):
 
 
 def win_results(preds, w, h, score_threshold=0.5, top_k=1):
-    with timer.env('Postprocess'):
-        save = cfg.rescore_bbox
-        cfg.rescore_bbox = True
-        t = postprocess(preds, w, h, score_threshold=score_threshold)
-        cfg.rescore_bbox = save
 
-    with timer.env('Copy'):
-        idx = t[1].argsort(0, descending=True)[:top_k]
+    save = cfg.rescore_bbox
+    cfg.rescore_bbox = True
+    t = postprocess(preds, w, h, score_threshold=score_threshold)
+    cfg.rescore_bbox = save
 
-        if cfg.eval_mask_branch:
-            # Masks are drawn on the GPU, so don't copy
-            masks = t[3][idx]
-        classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
+    idx = t[1].argsort(0, descending=True)[:top_k]
+
+    if cfg.eval_mask_branch:
+        # Masks are drawn on the GPU, so don't copy
+        masks = t[3][idx]
+    classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
     return [classes, scores, boxes]
 
 
@@ -327,19 +326,18 @@ def win_eval(img, score_threshold=0.5):
 
 
 def dora_results(preds, w, h, score_threshold=0.5, top_k=8):
-    with timer.env('Postprocess'):
-        save = cfg.rescore_bbox
-        cfg.rescore_bbox = True
-        t = postprocess(preds, w, h, score_threshold=score_threshold)
-        cfg.rescore_bbox = save
 
-    with timer.env('Copy'):
-        idx = t[1].argsort(0, descending=True)[:top_k]
+    save = cfg.rescore_bbox
+    cfg.rescore_bbox = True
+    t = postprocess(preds, w, h, score_threshold=score_threshold)
+    cfg.rescore_bbox = save
 
-        if cfg.eval_mask_branch:
-            # Masks are drawn on the GPU, so don't copy
-            masks = t[3][idx]
-        classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
+    idx = t[1].argsort(0, descending=True)[:top_k]
+
+    if cfg.eval_mask_branch:
+        # Masks are drawn on the GPU, so don't copy
+        masks = t[3][idx]
+    classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
 
     return [classes, scores, boxes]
 
@@ -371,20 +369,20 @@ def dora_eval(img, score_threshold=0.5):
 
 
 def hand_results(preds, w, h, score_threshold=0.5, top_k=13):
-    with timer.env('Postprocess'):
-        save = cfg.rescore_bbox
-        cfg.rescore_bbox = True
-        t = postprocess(preds, w, h, score_threshold=score_threshold)
-        cfg.rescore_bbox = save
 
-    with timer.env('Copy'):
-        idx = t[1].argsort(0, descending=True)
+    save = cfg.rescore_bbox
+    cfg.rescore_bbox = True
+    t = postprocess(preds, w, h, score_threshold=score_threshold)
+    cfg.rescore_bbox = save
 
-        if cfg.eval_mask_branch:
-            # Masks are drawn on the GPU, so don't copy
-            masks = t[3][idx]
-        classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
-        classes, scores, boxes = delete_large_box(classes, scores, boxes, top_k)
+
+    idx = t[1].argsort(0, descending=True)
+
+    if cfg.eval_mask_branch:
+        # Masks are drawn on the GPU, so don't copy
+        masks = t[3][idx]
+    classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
+    classes, scores, boxes = delete_large_box(classes, scores, boxes, top_k)
     return [classes, scores, boxes]
 
 
@@ -416,19 +414,19 @@ def hand_eval(img, score_threshold=0.5):
 
 
 def naki_results(preds, w, h, score_threshold=0.5, top_k=16):
-    with timer.env('Postprocess'):
-        save = cfg.rescore_bbox
-        cfg.rescore_bbox = True
-        t = postprocess(preds, w, h, score_threshold=score_threshold)
-        cfg.rescore_bbox = save
 
-    with timer.env('Copy'):
-        idx = t[1].argsort(0, descending=True)[:top_k]
+    save = cfg.rescore_bbox
+    cfg.rescore_bbox = True
+    t = postprocess(preds, w, h, score_threshold=score_threshold)
+    cfg.rescore_bbox = save
 
-        if cfg.eval_mask_branch:
-            # Masks are drawn on the GPU, so don't copy
-            masks = t[3][idx]
-        classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
+
+    idx = t[1].argsort(0, descending=True)[:top_k]
+
+    if cfg.eval_mask_branch:
+        # Masks are drawn on the GPU, so don't copy
+        masks = t[3][idx]
+    classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
 
     return [classes, scores, boxes]
 
