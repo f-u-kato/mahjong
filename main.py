@@ -292,7 +292,7 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
                                 isRiichi[i] = False
                         elif not isRiichi[i]:
                             r_count[i] = 0
-                    if sum(isRiichi) < len(isRiichi):
+                    if sum(isRiichi) < 4 - is_sanma:
                         riichi_images = []
                         for i in range(4-is_sanma):
                             riichi_images.append(get.get_riichi(field_points, i, im))
@@ -322,16 +322,23 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
             img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
             show_img(img, m, field_points, M=sM, reduction=reduction)
             c = cv2.waitKey(1)
-
+            count += 1
             # 流局
-            if c == ord('q'):
+            if c == ord('q') and count > 50:
                 music.stop_music()
                 music.play_se(RYOUKYOKU_SE)
-                return -1, isRiichi
-            elif c == ord('p'):
+                win_player = -1
+                break
+            # リーチのリセット
+            elif c == ord('r'):
+                for i in range(4-is_sanma):
+                    player_points[i] += 1000 * isRiichi[i]
+                    isRiichi[i] = False
+                r_count = [0, 0, 0, 0]
+                speed = 1
                 music.stop_music()
-                music.play_se(RYOUKYOKU_SE)
-                return -2 , isRiichi
+                music.loop_music(PLAY_BGM[rand])
+                
 
     return win_player, isRiichi
 
@@ -378,9 +385,9 @@ def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is
                 break
             c2 = cv2.waitKey(1)
             if c2 == ord('q'):
-                return -1, -1
+                return -1, -1, -1
             elif c2 == ord('p'):
-                return -2, -2
+                return -2, -2, -2
         # 再び検出牌を表示
         show_img(img, m, field_points, M=sM, reduction=reduction)
         cv2.waitKey(1)
