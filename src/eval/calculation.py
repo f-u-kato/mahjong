@@ -108,7 +108,6 @@ def most_common_char(string):
     return max_char
 
 def most_common_char(string):
-    # 辞書を使用して文字の出現回数を数える
     char_count = {}
     for char in string:
         if char in char_count:
@@ -116,7 +115,7 @@ def most_common_char(string):
         else:
             char_count[char] = 1
 
-    # 出現回数が最大の文字を見つける
+    # 出現回数が最大の文字
     max_count = 0
     max_char = None
     for char, count in char_count.items():
