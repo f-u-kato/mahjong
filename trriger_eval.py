@@ -219,8 +219,8 @@ def train_val_div(source_folder,train_ratio=0.8):
             shutil.copy(file, f'./{source_folder}/val/{class_folder}')
 
 if __name__ == '__main__':
-    train_val_div('./save_ryukyoku')
-    resnet_train('save_ryukyoku',class_num=3)
+    train_val_div('./save_riichi',0.8)
+    resnet_train('save_riichi',class_num=2)
     # resnet_train('trigger')
     # trigger_test()
     # img_path=r"F:\PBL\yolact\trriger\val\0\970.png"

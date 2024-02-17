@@ -37,7 +37,7 @@ for i in range(9):
 MAHJONG_IMAGES += ["./material/tupai/p_ji_e_1.png", "./material/tupai/p_ji_s_1.png", "./material/tupai/p_ji_w_1.png", "./material/tupai/p_ji_n_1.png", "./material/tupai/p_no_1.png",
                    "./material/tupai/p_ji_h_1.png", "./material/tupai/p_ji_c_1.png", "./material/manzu/p_msaka.png", "./material/pinzu/pinaka.png", "./material/sozu/soaka.png", "./material/tupai/ura.png"]
 
-
+# 2点から左上右下の座標を取得
 def min_max_xy(pt1, pt2):
     [x1, y1] = pt1.copy()
     [x2, y2] = pt2.copy()
@@ -57,7 +57,7 @@ def padding_img_size(img, size=[544, 967]):
     w_pad = size[1]-w
     return cv2.copyMakeBorder(img, 0, h_pad, 0, w_pad, cv2.BORDER_CONSTANT, value=color)
 
-
+# 縦横比の調節
 def padding_img(img, padding_size=[9, 16]):
     color = (163, 213, 106)
     h, w, _ = img.shape
@@ -69,11 +69,11 @@ def padding_img(img, padding_size=[9, 16]):
         w_pad = 0
     return cv2.copyMakeBorder(img, 0, h_pad, 0, w_pad, cv2.BORDER_CONSTANT, value=color)
 
-
+# 画像を領域に合わせてリサイズ
 def resize_img(img, field_points, size=1.0):
     return cv2.resize(img, (int((field_points[1][0]-field_points[0][0])*size), int((field_points[1][1]-field_points[0][1])*size)))
 
-
+# main画像にadd_imgを貼り付け
 def place_img(main_img, add_img, field_points, place_points=None, auto=False):
     h2, w2, c = add_img.shape
     new_img = main_img.copy()
@@ -105,7 +105,7 @@ def place_img(main_img, add_img, field_points, place_points=None, auto=False):
 
     return new_img
 
-
+# 動画のループ
 def loop_movie(field_points, video, size, ton_player=1, img=None, reduction=1, speed=1):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
@@ -120,7 +120,7 @@ def loop_movie(field_points, video, size, ton_player=1, img=None, reduction=1, s
         out_img = back_place(video, img, draw_points, ton_player)
     return out_img
 
-
+# サイコロ表示
 def draw_dice(field_points, size=(2160, 3840, 3), img=None, reduction=1, number=[0, 0]):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
@@ -190,9 +190,39 @@ def back_place(video, main_img, field_points, player, time=None, reduction=1, sk
     out_img = place_img(main_img, resize_img(frame, draw_points), draw_points)
     return out_img
 
+def trriger_point(draw_points, player):
+    hai_size = max(draw_points[1][0]-draw_points[0][0], draw_points[1][1]-draw_points[0][1])//15
+    hai_point = [hai_size*2, hai_size]
+    pt1 = [draw_points[0][0]+hai_point[0], draw_points[0][1]+hai_point[1]]
+    pt2 = [x + hai_size for x in pt1]
+    pt1, pt2 = min_max_xy(pt1, pt2)
+    pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
+    if player == 0:
+        return pt1, pt2
+
+    pt1 = [draw_points[1][0]-hai_point[0], draw_points[1][1]-hai_point[1]]
+    pt2 = [x - hai_size for x in pt1]
+    pt1, pt2 = min_max_xy(pt1, pt2)
+    pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
+    if player == 3:
+        return pt1, pt2
+    
+
+    pt1 = [draw_points[1][0]-hai_point[1], draw_points[0][1]+hai_point[0]]
+    pt2 = [pt1[0]-hai_size, pt1[1]+hai_size]
+    pt1, pt2 = min_max_xy(pt1, pt2)
+    pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
+    if player == 2:
+        return pt1, pt2
+
+    pt1 = [draw_points[0][0]+hai_point[1], draw_points[1][1]-hai_point[0]]
+    pt2 = [pt1[0]+hai_size, pt1[1]-hai_size]
+    pt1, pt2 = min_max_xy(pt1, pt2)
+    pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
+    return pt1, pt2
+
+
 # win_tile
-
-
 def draw_rect(field_points, size=(2160, 3840, 3), img=None, color=(0, 255, 0), reduction=1):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
