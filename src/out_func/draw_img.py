@@ -204,7 +204,7 @@ def trriger_point(draw_points, player):
     pt2 = [x - hai_size for x in pt1]
     pt1, pt2 = min_max_xy(pt1, pt2)
     pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
-    if player == 3:
+    if player == 2:
         return pt1, pt2
     
 
@@ -212,7 +212,7 @@ def trriger_point(draw_points, player):
     pt2 = [pt1[0]-hai_size, pt1[1]+hai_size]
     pt1, pt2 = min_max_xy(pt1, pt2)
     pt1 = [pt1[0]+(pt2[0]-pt1[0])//2-hai_size, pt1[1]+(pt2[1]-pt1[1])//2-hai_size]
-    if player == 2:
+    if player == 3:
         return pt1, pt2
 
     pt1 = [draw_points[0][0]+hai_point[1], draw_points[1][1]-hai_point[0]]
@@ -306,9 +306,7 @@ def draw_rect2(field_points, size=(2160, 3840, 3), img=None, color=(0, 255, 0)):
     return img
 
 # 鳴き牌の位置
-
-
-def draw_player_naki(field_points, player, size=(2160, 3840, 3), img=None, first=False, color=(0, 255, 0), return_points=False, reduction=1):
+def points_naki_field(field_points, player, size=(2160, 3840, 3), img=None, reduction=1):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
@@ -332,9 +330,7 @@ def draw_player_naki(field_points, player, size=(2160, 3840, 3), img=None, first
     return [pt1, pt2]
 
 # 手牌の位置
-
-
-def draw_player_hand(field_points, player, size=(2160, 3840, 3), img=None, first=False, color=(0, 255, 0), return_points=False, reduction=1):
+def points_hand_field(field_points, player, size=(2160, 3840, 3), img=None, reduction=1):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
@@ -342,7 +338,7 @@ def draw_player_hand(field_points, player, size=(2160, 3840, 3), img=None, first
         img = np.zeros(draw_size, np.uint8)
     hai_size = max(draw_points[1][0]-draw_points[0][0], draw_points[1][1]-draw_points[0][1])//15
     # 鳴き牌
-    [pt1, pt2] = draw_player_naki(field_points, player, size, img, first, color, return_points, reduction)
+    [pt1, pt2] = points_naki_field(field_points, player, size, img, reduction)
     # 手牌
     if player == 0:
         pt1 = [pt2[0]+hai_size//3, pt1[1]]
@@ -359,7 +355,7 @@ def draw_player_hand(field_points, player, size=(2160, 3840, 3), img=None, first
     return [pt1, pt2]
 
 
-def draw_player_dora(field_points, player, size=(2160, 3840, 3), img=None, first=False, color=(0, 255, 0), return_points=False, reduction=1):
+def points_dora_field(field_points, player, size=(2160, 3840, 3), img=None, reduction=1):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
@@ -367,7 +363,7 @@ def draw_player_dora(field_points, player, size=(2160, 3840, 3), img=None, first
         img = np.zeros(draw_size, np.uint8)
     hai_size = max(draw_points[1][0]-draw_points[0][0], draw_points[1][1]-draw_points[0][1])//15
    # 手牌
-    [pt1, pt2] = draw_player_hand(field_points, player, size, img, first, color, return_points, reduction)
+    [pt1, pt2] = points_hand_field(field_points, player, size, img, reduction)
     # ドラ
     if player == 0:
         pt1 = [pt2[0], pt2[1]+hai_size//10]
@@ -384,7 +380,7 @@ def draw_player_dora(field_points, player, size=(2160, 3840, 3), img=None, first
     return [pt1, pt2]
 
 
-def draw_player_wintile(field_points, player, size=(2160, 3840, 3), img=None, first=False, color=(0, 255, 0), return_points=False, reduction=1):
+def points_wintile_field(field_points, player, size=(2160, 3840, 3), img=None, reduction=1):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
@@ -392,7 +388,7 @@ def draw_player_wintile(field_points, player, size=(2160, 3840, 3), img=None, fi
         img = np.zeros(draw_size, np.uint8)
     hai_size = max(draw_points[1][0]-draw_points[0][0], draw_points[1][1]-draw_points[0][1])//15
    # ドラ
-    [pt1, pt2] = draw_player_dora(field_points, player, size, img, first, color, return_points, reduction)
+    [pt1, pt2] = points_dora_field(field_points, player, size, img, reduction)
     # あがりはい
     if player == 0:
         pt1 = [pt2[0]-hai_size, pt1[1]]
@@ -419,22 +415,22 @@ def draw_player_rect(field_points, player, size=(2160, 3840, 3), img=None, first
     hai_size = max(draw_points[1][0]-draw_points[0][0], draw_points[1][1]-draw_points[0][1])//15
     points = []
     # 鳴き牌
-    [pt1, pt2] = draw_player_naki(field_points, player, size, img, first, color, return_points, reduction)
+    [pt1, pt2] = points_naki_field(field_points, player, size, img, first, color, return_points, reduction)
     cv2.rectangle(img, pt1, pt2, color, int(3//reduction))
     points.append([pt1, pt2])
     # 手牌
-    [pt1, pt2] = draw_player_hand(field_points, player, size, img, first, color, return_points, reduction)
+    [pt1, pt2] = points_hand_field(field_points, player, size, img, first, color, return_points, reduction)
     cv2.rectangle(img, pt1, pt2, color, int(3//reduction))
     points.append([pt1, pt2])
     # ドラ
-    [pt1, pt2] = draw_player_dora(field_points, player, size, img, first, color, return_points, reduction)
+    [pt1, pt2] = points_dora_field(field_points, player, size, img, first, color, return_points, reduction)
     cv2.rectangle(img, pt1, pt2, color, int(3//reduction))
     points.append([pt1, pt2])
     if first:
         img = first_img
     # あがりはい
     for i in range(4-is_sanma):
-        [pt1, pt2] = draw_player_wintile(field_points, i, size, img, first, color, return_points, reduction)
+        [pt1, pt2] = points_wintile_field(field_points, i, size, img, reduction)
         cv2.rectangle(img, pt1, pt2, color, int(3//reduction))
         if i == player:
             points.append([pt1, pt2])

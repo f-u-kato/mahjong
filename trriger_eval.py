@@ -106,7 +106,7 @@ def resnet_train(name='riichi',class_num=2):
     # 最適化手法を選択する。
     optimizer = torch.optim.Adam(model_ft.parameters(), lr=0.001)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
-    n_epochs = 10  # エポック数
+    n_epochs = 20  # エポック数
     history= train(
         model_ft, criterion, optimizer, scheduler, dataloaders, device, n_epochs
     )
