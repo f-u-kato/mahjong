@@ -615,7 +615,7 @@ def draw_player_points(field_points, player_points, size=(2160, 3840, 3), img=No
     return img
 
 
-def draw_kaze(field_points, player, size=(2160, 3840, 3), img=None, reduction=1,is_sanma=False):
+def draw_kaze(field_points, player, size=(2160, 3840, 3), img=None, reduction=1,is_sanma=False, first_position=0):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
@@ -628,26 +628,29 @@ def draw_kaze(field_points, player, size=(2160, 3840, 3), img=None, reduction=1,
     else:
         kaze_img = ['./material/wind/higashi.png', './material/wind/minami.png', './material/wind/nishi.png', './material/wind/kita.png']
     kaze_img = kaze_img[len(kaze_img)-player:]+kaze_img[:len(kaze_img)-player]
+    
+    rotate_list = [cv2.ROTATE_180, cv2.ROTATE_90_CLOCKWISE, None ,cv2.ROTATE_90_COUNTERCLOCKWISE]
 
-    add_img = cv2.imread(kaze_img[0], -1)
-    add_img = cv2.rotate(add_img, cv2.ROTATE_180)
-    add_img = cv2.resize(add_img, [hai_size, hai_size])
-    r_im = place_img(img, add_img, draw_points, [draw_points[0][0], draw_points[0][1]])
+    kaze_num = 0
 
-    add_img = cv2.imread(kaze_img[1], -1)
-    add_img = cv2.rotate(add_img, cv2.ROTATE_90_CLOCKWISE)
-    add_img = cv2.resize(add_img, [hai_size, hai_size])
-    r_im = place_img(r_im, add_img, draw_points, [draw_points[0][0], draw_points[1][1]-hai_size])
-
-    add_img = cv2.imread(kaze_img[2], -1)
-    add_img = cv2.resize(add_img, [hai_size, hai_size])
-    r_im = place_img(r_im, add_img, draw_points, [draw_points[1][0]-hai_size, draw_points[1][1]-hai_size])
-
-    if not is_sanma:
-        add_img = cv2.imread(kaze_img[3], -1)
-        add_img = cv2.rotate(add_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    for position in range(4):
+        if is_sanma and position == (first_position+3)%4:
+            continue
+        add_img = cv2.imread(kaze_img[kaze_num], -1)
+        kaze_num+=1
         add_img = cv2.resize(add_img, [hai_size, hai_size])
-        r_im = place_img(r_im, add_img, draw_points, [draw_points[1][0]-hai_size, draw_points[0][1]])
+        if rotate_list[position] is not None:
+            add_img = cv2.rotate(add_img, rotate_list[position])
+        if position == 0:
+            pt1 = [draw_points[0][0]+hai_size, draw_points[0][1]]
+        elif position == 1:
+            pt1 = [draw_points[0][0], draw_points[1][1]-hai_size]
+        elif position == 2:
+            pt1 = [draw_points[1][0]-hai_size, draw_points[1][1]-hai_size]
+        elif position == 3:
+            pt1 = [draw_points[1][0]-hai_size, draw_points[0][1]]
+    
+        r_im = place_img(img, add_img, draw_points, pt1)
 
     return r_im
 

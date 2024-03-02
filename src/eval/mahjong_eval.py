@@ -343,7 +343,7 @@ def dora_results(preds, w, h, score_threshold=0.5, top_k=8):
 
 
 def dora_eval(img, score_threshold=0.5):
-    img = draw.padding_img(img.copy())
+    img = draw.padding_img_size(img.copy())
     h, w, _ = img.shape
 
     model_path = SavePath.from_str(TRAINED_MODEL)
@@ -387,7 +387,7 @@ def hand_results(preds, w, h, score_threshold=0.5, top_k=13):
 
 
 def hand_eval(img, score_threshold=0.5):
-    img = draw.padding_img(img.copy())
+    img = draw.padding_img_size(img.copy())
     h, w, _ = img.shape
 
     model_path = SavePath.from_str(TRAINED_MODEL)
@@ -432,7 +432,7 @@ def naki_results(preds, w, h, score_threshold=0.5, top_k=16):
 
 
 def naki_eval(img, score_threshold=0.5):
-    img = draw.padding_img(img)
+    img = draw.padding_img_size(img)
     h, w, _ = img.shape
 
     model_path = SavePath.from_str(OLD_TRAINED_MODEL)
