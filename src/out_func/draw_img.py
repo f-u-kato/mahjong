@@ -190,7 +190,7 @@ def back_place(video, main_img, field_points, player, time=None, reduction=1, sk
     out_img = place_img(main_img, resize_img(frame, draw_points), draw_points)
     return out_img
 
-def trriger_point(draw_points, player):
+def trigger_point(draw_points, player):
     hai_size = max(draw_points[1][0]-draw_points[0][0], draw_points[1][1]-draw_points[0][1])//15
     hai_point = [hai_size*2, hai_size]
     pt1 = [draw_points[0][0]+hai_point[0], draw_points[0][1]+hai_point[1]]
@@ -248,7 +248,7 @@ def draw_rect(field_points, size=(2160, 3840, 3), img=None, color=(0, 255, 0), r
     return img
 
 
-def draw_rect_movie(field_points, cap, size=(2160, 3840, 3), img=None, color=(0, 255, 0), reduction=1, speed=3, is_sanma=False):
+def draw_rect_movie(field_points, cap, size=(2160, 3840, 3), img=None, color=(0, 255, 0), reduction=1, speed=3, is_sanma=False, first_position=0):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
@@ -269,6 +269,12 @@ def draw_rect_movie(field_points, cap, size=(2160, 3840, 3), img=None, color=(0,
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
     frame[mask, 3] = 0
 
+    for i in range(4):
+        if is_sanma and i == (first_position + 3)%4:
+            continue
+        pt1, pt2 = trigger_point(draw_points, i)
+        img = place_img(img, frame, draw_points, pt1)
+    return img 
     pt1 = [draw_points[0][0]+hai_point[0], draw_points[0][1]+hai_point[1]]
     pt2 = [x + hai_size for x in pt1]
     pt1, pt2 = min_max_xy(pt1, pt2)
