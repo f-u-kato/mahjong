@@ -176,23 +176,6 @@ def setting_window(field_points, size, m, dst, reduction=1):
             spinbox.configure(text_color='white')  # spinboxを無効にする
         else:
             spinbox.configure(text_color='black')  # spinboxを有効にする
-    
-    # 東プレイヤーの位置を変更する関数
-    global start_position
-    start_position = 0
-    def ton_change():
-        global start_position
-        start_position += 1
-        if start_position > 3:
-            start_position = 0
-        img = draw.draw_kaze(field_points, start_position, reduction=reduction, is_sanma=mode_type.get() > 1)
-        _ = show_img(img, m, field_points, dst=dst, reduction=reduction)
-        cv2.waitKey(1)
-        
-    def random_ton_change():
-        for i in range(random.randint(5,30)):
-            ton_change()
-        
         
 
     # ラジオボタン
@@ -212,11 +195,6 @@ def setting_window(field_points, size, m, dst, reduction=1):
     is_check=tk.IntVar(value=1)
     ctk.CTkCheckBox(score_frame, text="設定しない", variable=is_check, onvalue=0, offvalue=1, command=lambda:toggle_spinbox(end_score,is_check)).pack(side="left", padx=10)
     
-    # 東プレイヤーの位置を変更するボタン
-    ctk.CTkButton(app, text="東の位置変更", command=ton_change).pack(side="top", anchor="n", padx=10, pady=10)
-    # 東プレイヤーの位置をランダムに変更するボタン
-    ctk.CTkButton(app, text="ランダム", command=random_ton_change).pack(side="top", anchor="n", padx=10, pady=10)
-    
 
 
     # スタートボタンの作成と配置
@@ -229,9 +207,9 @@ def setting_window(field_points, size, m, dst, reduction=1):
     score = end_score.get() if is_check.get() else 0
     sanma_options_result = [app.fu_calculation.get(), app.tsumo_loss.get()] if is_sanma else [None, None]
 
-    return is_sanma, is_tonpu, score, sanma_options_result, start_position
+    return is_sanma, is_tonpu, score, sanma_options_result
 
-def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, kyotaku, dst, player_points, reduction=1, is_sanma=False, start_position=0):
+def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, kyotaku, dst, player_points, reduction=1, is_sanma=False):
     # 立直の判定
     isRiichi = [False, False, False, False]
     # 立直判定のカウント
@@ -244,10 +222,10 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
     # トリガー動画の読み込み
     trigger = cv2.VideoCapture(TRIGGER_VIDEOS[random.randint(0, len(TRIGGER_VIDEOS)-1)])
     # 情報と領域の投影
-    img = draw.draw_rect_movie(field_points, trigger, size, img=None, reduction=reduction)
+    img = draw.draw_rect_movie(field_points, trigger, size, img=None, reduction=reduction, is_sanma=is_sanma)
     img = draw.draw_riichi(field_points, img=img, reduction=reduction)
     img = draw.draw_kaze(field_points, ton_player, img=img, reduction=reduction, is_sanma=is_sanma)
-    img = draw.draw_honba(field_points, ton_player, round_wind, honba, kyotaku,img=img, reduction=reduction, start_position=start_position)
+    img = draw.draw_honba(field_points, ton_player, round_wind, honba, kyotaku,img=img, reduction=reduction)
     img = draw.draw_player_points(field_points, player_points, img=img, reduction=reduction,is_sanma=is_sanma)
     sM = show_img(img, m, field_points, dst=dst, reduction=reduction)
     cv2.waitKey(1)
@@ -267,7 +245,9 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
 
         # 立直判定
         riichi_images = []
-        for i in range(4-is_sanma):
+        for i in range(4):
+            if is_sanma:
+                continue
             riichi_images.append(get.get_riichi(field_points, i, im.copy()))
         riichi_process = executor.submit(eval.multi_riichi_eval, riichi_images)
 
@@ -317,6 +297,8 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
                     if sum(isRiichi) < 4 - is_sanma:
                         riichi_images = []
                         for i in range(4-is_sanma):
+                            if is_sanma:
+                                continue
                             riichi_images.append(get.get_riichi(field_points, i, im))
                         riichi_process = executor.submit(eval.multi_riichi_eval, riichi_images)
 
@@ -326,7 +308,8 @@ def read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, 
             # 立直演出
             for i in range(4-is_sanma):
                 if isRiichi[i] and r_count[i] > r_max:
-                    tmp_img = draw.back_place(r_video, img, field_points, i, time=r_frame[i], reduction=reduction,skelton=True)
+                    player_num = (i+ton_player) % 4
+                    tmp_img = draw.back_place(r_video, img, field_points, player_num, time=r_frame[i], reduction=reduction,skelton=True)
                     r_frame[i] += 3
                     if tmp_img is None:
                         if not (-1 in r_count):
@@ -373,7 +356,9 @@ def wait_no_wintile(field_points, win_player, size, dst, cap, cM, m, im=None, re
         im = trans.transform_camera(im, M=cM)
 
         isHai = False
-        for i in range(4-is_sanma):
+        for i in range(4):
+            if is_sanma:
+                continue
             if in_hai(get.get_wintile(field_points, i, im, size)):
                 isHai = True
         if not isHai:
@@ -423,11 +408,14 @@ def read_wintile(field_points, win_player, size, cap, cM, ton_player, m, dst, is
 
         # 上がり牌の検出
         hai_images = []
-        for i in range(4-is_sanma):
+        for i in range(4):
+            if is_sanma:
+                continue
             hai_images.append(get.get_wintile(field_points, i, im, size))
         win_evals = eval.multi_win_eval(hai_images, 0.8)
         for i, win_eval in enumerate(win_evals):
             [win_class, win_score, win_box] = win_eval
+            
             if len(win_class) > 0 and win_class != 37:
                 lose_player = i
                 print('set ok')
@@ -589,7 +577,7 @@ def draw_movie(field_points, size, m, cap, win_player, cM, agari, dst, min_size=
     return
 
 
-def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points, min_size=(540, 960, 3), round_wind=0, honba=0, kyotaku=0, is_sanma=False, sanma_options=[None,None], start_position=0):
+def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points, min_size=(540, 960, 3), round_wind=0, honba=0, kyotaku=0, is_sanma=False, sanma_options=[None,None]):
     # 表示倍率
     reduction = size[0]/min_size[0]
 
@@ -633,7 +621,7 @@ def mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points,
         reduction = size[0]/min_size[0]
         # トリガー検出
         win_player,isRiichi = read_trigger(cap, field_points, size, cM, ton_player, m, round_wind, honba, kyotaku=kyotaku, dst=dst,
-                                  player_points=player_points, reduction=reduction, is_sanma=is_sanma, start_position=start_position)
+                                  player_points=player_points, reduction=reduction, is_sanma=is_sanma)
         # リーチ分を加算
         kyotaku+=sum(isRiichi)
         # 流局
@@ -887,7 +875,7 @@ def main():
     kyotaku = 0
     
     # ゲーム開始前の設定
-    is_sanma, is_tonpu, end_point, sanma_options, start_position = setting_window(field_points, size, cM, cap, m, dst, reduction=reduction)
+    is_sanma, is_tonpu, end_point, sanma_options = setting_window(field_points, size, cM, cap, m, dst, reduction=reduction)
     is_over = False
     if is_sanma:
         player_points = [35000, 35000, 35000]
@@ -896,7 +884,7 @@ def main():
     while (isContinue):
         while (ton_player < 4 - is_sanma and isContinue):
             # 局の開始
-            win_result, isContinue, kyotaku = mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points, round_wind=round_wind, honba=honba, kyotaku=kyotaku, is_sanma=is_sanma, sanma_options=sanma_options, start_position=start_position)
+            win_result, isContinue, kyotaku = mahjong_main(cap, m, dst, ton_player, field_points, cM, size, player_points, round_wind=round_wind, honba=honba, kyotaku=kyotaku, is_sanma=is_sanma, sanma_options=sanma_options)
             # 親の変更
             if win_result > 0:
                 ton_player += 1

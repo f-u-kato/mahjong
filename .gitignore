@@ -27,4 +27,7 @@
 *.png
 *.yml
 *.csv
+*.json
+*.pyc
+
 sample.py

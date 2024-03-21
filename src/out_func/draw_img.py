@@ -50,7 +50,7 @@ def min_max_xy(pt1, pt2):
     return pt1, pt2
 
 
-def padding_img_size(img, size=[544, 967]):
+def padding_img_size(img, size=[594, 1056]):
     color = (163, 213, 106)
     h, w, _ = img.shape
     h_pad = size[0]-h
@@ -248,7 +248,7 @@ def draw_rect(field_points, size=(2160, 3840, 3), img=None, color=(0, 255, 0), r
     return img
 
 
-def draw_rect_movie(field_points, cap, size=(2160, 3840, 3), img=None, color=(0, 255, 0), reduction=1, speed=3, is_sanma=False, first_position=0):
+def draw_rect_movie(field_points, cap, size=(2160, 3840, 3), img=None, color=(0, 255, 0), reduction=1, speed=3, is_sanma=False, start_position=0):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
@@ -270,7 +270,7 @@ def draw_rect_movie(field_points, cap, size=(2160, 3840, 3), img=None, color=(0,
     frame[mask, 3] = 0
 
     for i in range(4):
-        if is_sanma and i == (first_position + 3)%4:
+        if is_sanma and i == (start_position + 3)%4:
             continue
         pt1, pt2 = trigger_point(draw_points, i)
         img = place_img(img, frame, draw_points, pt1)
@@ -596,15 +596,20 @@ def draw_ura_rect(field_points, size=(2160, 3840, 3), img=None, reduction=1):
 
 
 # 点数表示
-def draw_player_points(field_points, player_points, size=(2160, 3840, 3), img=None, reduction=1, is_sanma=False):
+def draw_player_points(field_points, player_points, size=(2160, 3840, 3), img=None, reduction=1, is_sanma=False, start_position=0):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
     hai_size = max(draw_points[1][0]-draw_points[0][0], draw_points[1][1]-draw_points[0][1])//15
     if img is None:
         img = np.zeros(draw_size, np.uint8)
-    for i in range(4-is_sanma):
-        add_img = num_img(player_points[i])
+
+    player_num = 0
+    for i in range(4):
+        if is_sanma and i == (start_position+3)%4:
+            continue
+        add_img = num_img(player_points[player_num])
+        player_num+=1
         add_img = cv2.resize(add_img, [int(add_img.shape[1]*0.8//reduction), int(add_img.shape[0]*0.8//reduction)])
         if i == 0:
             add_img = cv2.rotate(add_img, cv2.ROTATE_180)
@@ -621,7 +626,7 @@ def draw_player_points(field_points, player_points, size=(2160, 3840, 3), img=No
     return img
 
 
-def draw_kaze(field_points, player, size=(2160, 3840, 3), img=None, reduction=1,is_sanma=False, first_position=0):
+def draw_kaze(field_points, player, size=(2160, 3840, 3), img=None, reduction=1,is_sanma=False, start_position=0):
     draw_points = ([int(field_points[0][0]//reduction), int(field_points[0][1]//reduction)],
                    [int(field_points[1][0]//reduction), int(field_points[1][1]//reduction)])
     draw_size = [int(size[0]//reduction), int(size[1]//reduction), 3]
@@ -640,7 +645,7 @@ def draw_kaze(field_points, player, size=(2160, 3840, 3), img=None, reduction=1,
     kaze_num = 0
 
     for position in range(4):
-        if is_sanma and position == (first_position+3)%4:
+        if is_sanma and position == (start_position+3)%4:
             continue
         add_img = cv2.imread(kaze_img[kaze_num], -1)
         kaze_num+=1
